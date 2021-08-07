@@ -1,0 +1,9 @@
+include *.txt
+include VERSION
+include AUTHORS.rst
+include CONTRIBUTING.rst
+include LICENSE.txt
+include README.rst
+include hydrotoolbox/skill_metrics/README_SkillMetrics.txt
+include hydrotoolbox/skill_metrics/LICENSE_SkillMetrics.txt
+include hydrotoolbox/SciencePlots_styles/*
