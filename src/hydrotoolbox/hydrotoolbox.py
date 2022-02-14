@@ -87,19 +87,19 @@ def boughton_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         boughton(
@@ -181,19 +181,19 @@ def chapman_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         chapman(
@@ -277,19 +277,19 @@ def cm_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         cm(
@@ -371,19 +371,19 @@ def eckhardt_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         eckhardt(
@@ -463,19 +463,19 @@ def ewma_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         ewma(
@@ -565,19 +565,19 @@ def fixed_cli(
         basin area in mile^2
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         fixed(
@@ -661,19 +661,19 @@ def furey(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         furey(
@@ -753,19 +753,19 @@ def lh_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         lh(
@@ -850,19 +850,19 @@ def local_cli(
         basin area in mile^2
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         local(
@@ -958,19 +958,19 @@ def ihacres_cli(
         coefficient
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         ihacres(
@@ -1083,19 +1083,19 @@ def slide_cli(
         Area of watershed in miles**2
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         slide(
@@ -1177,19 +1177,19 @@ def ukih_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         ukih(
@@ -1271,19 +1271,19 @@ def willems_cli(
     ----------
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         willems(
@@ -1369,19 +1369,19 @@ def recession_cli(
         Period of ice that changes the discharge relationship
     input_ts
         Streamflow
-    {columns}
-    {source_units}
-    {start_date}
-    {end_date}
-    {dropna}
-    {clean}
-    {round_index}
-    {skiprows}
-    {index_type}
-    {names}
-    {target_units}
-    {print_input}
-    {tablefmt}
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
     """
     tsutils.printiso(
         recession(

@@ -6,7 +6,7 @@ hydrotoolbox
 =========
 
 This is the home page for hydrotoolbox.  hydrotoolbox is a command line program and
-Python library to work with time-series.
+Python library for hydrologic analysis.
 
 hydrotoolbox should work with Python 3.6+.
 
@@ -16,7 +16,6 @@ Table of Contents
    :maxdepth: 2
 
    readme
-   notebooks
    command_line
    function_summary
    contributing
