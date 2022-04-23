@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit, prange
 
 from .utils import NSE, moving_average, multi_arange
 
@@ -40,11 +39,10 @@ def param_calibrate(param_range, method, Q, b_LH):
     return param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth)
 
 
-@njit(parallel=True)
 def param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth):
     logQ = np.log(Q + 1)
     loss = np.zeros(param_range.shape)
-    for i in prange(param_range.shape[0]):
+    for i in range(param_range.shape[0]):
         p = param_range[i]
         b_exceed = method(Q, b_LH, p, return_exceed=True)
         f_exd, logb = b_exceed[-1] / Q.shape[0], np.log(b_exceed[:-1] + 1)
@@ -89,7 +87,6 @@ def maxmium_BFI(Q, b_LH, a, date=None):
     return BFI_max
 
 
-@njit
 def Backward(Q, b_LH, a):
     b = np.zeros(Q.shape[0])
     b[-1] = b_LH[-1]

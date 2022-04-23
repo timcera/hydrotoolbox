@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit, prange
 
 from .Local import hysep_interval
 
@@ -16,11 +15,10 @@ def Fixed(Q, area=None):
     return Fixed_interpolation(Q, inN)
 
 
-@njit(parallel=True)
 def Fixed_interpolation(Q, inN):
     b = np.zeros(Q.shape[0])
     n = Q.shape[0] // inN
-    for i in prange(n):
+    for i in range(n):
         b[inN * i : inN * (i + 1)] = np.min(Q[inN * i : inN * (i + 1)])
     if n * inN != Q.shape[0]:
         b[n * inN :] = np.min(Q[n * inN :])

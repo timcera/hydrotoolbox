@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit, prange
 
 
 def UKIH(Q, b_LH, return_exceed=False):
@@ -20,10 +19,9 @@ def UKIH(Q, b_LH, return_exceed=False):
     return b
 
 
-@njit(parallel=True)
 def UKIH_turn(Q, idx_min):
     idx_turn = np.zeros(idx_min.shape[0], dtype=np.int64)
-    for i in prange(idx_min.shape[0] - 2):
+    for i in range(idx_min.shape[0] - 2):
         if (0.9 * Q[idx_min[i + 1]] < Q[idx_min[i]]) & (
             0.9 * Q[idx_min[i + 1]] < Q[idx_min[i + 2]]
         ):
@@ -31,7 +29,6 @@ def UKIH_turn(Q, idx_min):
     return idx_turn[idx_turn != 0]
 
 
-@njit
 def linear_interpolation(Q, idx_turn, return_exceed=False):
     if return_exceed:
         b = np.zeros(Q.shape[0] + 1)

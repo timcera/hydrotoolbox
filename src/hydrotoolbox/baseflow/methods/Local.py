@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit, prange
 
 from .UKIH import linear_interpolation
 
@@ -36,10 +35,9 @@ def hysep_interval(area):
     return inN
 
 
-@njit(parallel=True)
 def Local_turn(Q, inN):
     idx_turn = np.zeros(Q.shape[0], dtype=np.int64)
-    for i in prange(np.int64((inN - 1) / 2), np.int64(Q.shape[0] - (inN - 1) / 2)):
+    for i in range(np.int64((inN - 1) / 2), np.int64(Q.shape[0] - (inN - 1) / 2)):
         if Q[i] == np.min(Q[np.int64(i - (inN - 1) / 2) : np.int64(i + (inN + 1) / 2)]):
             idx_turn[i] = i
     return idx_turn[idx_turn != 0]

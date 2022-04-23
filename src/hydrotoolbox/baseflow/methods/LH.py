@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit
 
 
-@njit
 def LH(Q, beta=0.925, return_exceed=False):
     """LH digital filter (Lyne & Hollick, 1979)
 

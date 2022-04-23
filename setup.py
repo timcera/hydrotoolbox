@@ -41,7 +41,7 @@ install_requires = [
     "scikit-learn",
     "statsmodels",
     "setuptools",
-    "tstoolbox > 103.16.1",
+    "tstoolbox > 103.17.1",
 ]
 
 extras_require = {

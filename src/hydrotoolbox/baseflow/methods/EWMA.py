@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from numba import njit
 
 
-@njit
 def EWMA(Q, b_LH, e, return_exceed=False):
     """exponential weighted moving average (EWMA) filter (Tularam & Ilahee, 2008)
 
