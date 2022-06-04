@@ -1270,6 +1270,8 @@ def indices_cli(
 def indices(
     indice_codes,
     input_ts="-",
+    stream_classification=None,
+    flow_component=None,
     columns=None,
     source_units=None,
     start_date=None,
@@ -1301,6 +1303,104 @@ def indices(
         target_units=target_units,
     )
     indice_class = ind.Indices(Q)
+
+    lu = {
+        (None, None): "",
+        ("HARSH_INTERMITTENT", "AVERAGE_MAGNITUDE"): {"MA34", "MA22", "MA16"},
+        ("HARSH_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML15", "ML1"},
+        ("HARSH_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH14", "MH9"},
+        ("HARSH_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+        ("HARSH_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH5", "FH7"},
+        ("HARSH_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL2", "DL3"},
+        ("HARSH_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH5", "DH10", "DH22"},
+        ("HARSH_INTERMITTENT", "TIMING"): {"TH1", "TL2", "TH3"},
+        ("HARSH_INTERMITTENT", "RATE_OF_CHANGE"): {"RA4", "RA1", "RA5"},
+        ("FLASHY_INTERMITTENT", "AVERAGE_MAGNITUDE"): {"MA37", "MA18", "MA21", "MA9"},
+        ("FLASHY_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {"ML16", "ML6", "ML22", "ML15"},
+        ("FLASHY_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH4", "MH14", "MH7"},
+        ("FLASHY_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+        ("FLASHY_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH7", "FH10"},
+        ("FLASHY_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL13", "DL16", "DL18"},
+        ("FLASHY_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH12", "DH13", "DH15", "DH23"},
+        ("FLASHY_INTERMITTENT", "TIMING"): {"TA1", "TA2", "TL1", "TH3"},
+        ("FLASHY_INTERMITTENT", "RATE_OF_CHANGE"): {"RA9", "RA6", "RA5", "RA7"},
+        ("SNOWMELT_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA29", "MA40"},
+        ("SNOWMELT_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML22"},
+        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH1", "MH20"},
+        ("SNOWMELT_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH8", "FH11"},
+        ("SNOWMELT_PERENNIAL", "LOW_FLOW_DURATION"): {"DL5", "DL16"},
+        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH16", "DH19"},
+        ("SNOWMELT_PERENNIAL", "TIMING"): {"TA1", "TA3"},
+        ("SNOWMELT_PERENNIAL", "RATE_OF_CHANGE"): {"RA1", "RA8"},
+        ("SNOW_RAIN_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA44"},
+        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML14"},
+        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH20"},
+        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH5"},
+        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL13"},
+        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH12", "DH24"},
+        ("SNOW_RAIN_PERENNIAL", "TIMING"): {"TA1", "TL1"},
+        ("SNOW_RAIN_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8"},
+        ("GROUNDWATER_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA41", "MA8"},
+        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML18", "ML14", "ML16"},
+        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH19", "MH10"},
+        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH6", "FH11"},
+        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_DURATION"): {"DL9", "DL11", "DL16"},
+        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH11", "DH15", "DH20"},
+        ("GROUNDWATER_PERENNIAL", "TIMING"): {"TA1", "TH1", "TL2"},
+        ("GROUNDWATER_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA5"},
+        ("FLASHY_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA26", "MA41", "MA10"},
+        ("FLASHY_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML14", "ML16"},
+        ("FLASHY_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH8", "MH14"},
+        ("FLASHY_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+        ("FLASHY_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH4", "FH6", "FH7"},
+        ("FLASHY_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL10", "DL17"},
+        ("FLASHY_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH13", "DH16", "DH24"},
+        ("FLASHY_PERENNIAL", "TIMING"): {"TA1", "TA3", "TH3"},
+        ("FLASHY_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA7", "RA6"},
+        ("ALL_STREAMS", "AVERAGE_MAGNITUDE"): {"MA5", "MA41", "MA3", "MA11"},
+        ("ALL_STREAMS", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML4", "ML21", "ML18"},
+        ("ALL_STREAMS", "HIGH_FLOW_MAGNITUDE"): {"MH16", "MH8", "MH10", "MH14"},
+        ("ALL_STREAMS", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+        ("ALL_STREAMS", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH6", "FH7"},
+        ("ALL_STREAMS", "LOW_FLOW_DURATION"): {"DL13", "DL16", "DL17", "DL18"},
+        ("ALL_STREAMS", "HIGH_FLOW_DURATION"): {"DH13", "DH15", "DH16", "DH20"},
+        ("ALL_STREAMS", "TIMING"): {"TA1", "TH3", "TL2"},
+        ("ALL_STREAMS", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA6", "RA5"},
+    }
+
+    sclasses = [
+        "HARSH_INTERMITTENT",
+        "FLASHY_INTERMITTENT",
+        "SNOWMELT_PERENNIAL",
+        "SNOW_RAIN_PERENNIAL",
+        "GROUNDWATER_PERENNIAL",
+        "FLASHY_PERENNIAL",
+        "ALL_STREAMS",
+    ]
+    for sclass in sclasses:
+        lu[(sclass, None)] = set()
+
+    fcomps = [
+        "AVERAGE_MAGNITUDE",
+        "LOW_FLOW_MAGNITUDE",
+        "HIGH_FLOW_MAGNITUDE",
+        "LOW_FLOW_FREQUENCY",
+        "HIGH_FLOW_FREQUENCY",
+        "LOW_FLOW_DURATION",
+        "HIGH_FLOW_DURATION",
+        "TIMING",
+        "RATE_OF_CHANGE",
+    ]
+    for fcomp in fcomps:
+        lu[(None, fcomp)] = set()
+
+    for sclass in sclasses:
+        for fcomp in fcomps:
+            lu[(sclass, None)] = lu[(sclass, None)].union(lu[(sclass, fcomp)])
+            lu[(None, fcomp)] = lu[(None, fcomp)].union(lu[(sclass, fcomp)])
 
     hi = {}
     for icode in indice_codes:
