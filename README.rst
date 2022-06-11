@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/timcera/hydrotoolbox.svg?branch=master
-    :target: https://travis-ci.org/timcera/hydrotoolbox
+.. image:: https://github.com/timcera/hydrotoolbox/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/timcera/hydrotoolbox/actions/workflows/python-package.yml
     :height: 20
 
 .. image:: https://coveralls.io/repos/timcera/hydrotoolbox/badge.png?branch=master
@@ -11,7 +11,11 @@
     :target: https://pypi.python.org/pypi/hydrotoolbox
 
 .. image:: http://img.shields.io/badge/license-BSD-lightgrey.svg
-    :alt: hydrotoolbox license
+    :alt: BSD-3 clause license
+    :target: https://pypi.python.org/pypi/hydrotoolbox/
+
+.. image:: http://img.shields.io/pypi/dd/hydrotoolbox.svg
+    :alt: hydrotoolbox downloads
     :target: https://pypi.python.org/pypi/hydrotoolbox/
 
 hydrotoolbox - Quick Guide

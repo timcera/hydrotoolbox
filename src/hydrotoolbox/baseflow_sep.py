@@ -8,7 +8,6 @@ hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
-from __future__ import absolute_import, division, print_function
 
 import warnings
 

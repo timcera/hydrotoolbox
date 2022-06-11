@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/timcera/hydrotoolbox.svg?branch=master
-    :target: https://travis-ci.org/timcera/hydrotoolbox
+.. image:: https://github.com/timcera/hydrotoolbox/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/timcera/hydrotoolbox/actions/workflows/python-package.yml
     :height: 20
 
 .. image:: https://coveralls.io/repos/timcera/hydrotoolbox/badge.png?branch=master
