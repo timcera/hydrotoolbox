@@ -9,11 +9,7 @@ def LH(Q, beta=0.925, return_exceed=False):
         Q (np.array): streamflow
         beta (float): filter parameter, 0.925 recommended by (Nathan & McMahon, 1990)
     """
-    if return_exceed:
-        b = np.zeros(Q.shape[0] + 1)
-    else:
-        b = np.zeros(Q.shape[0])
-
+    b = np.zeros(Q.shape[0] + 1) if return_exceed else np.zeros(Q.shape[0])
     # first pass
     b[0] = Q[0] / 2
     for i in range(Q.shape[0] - 1):

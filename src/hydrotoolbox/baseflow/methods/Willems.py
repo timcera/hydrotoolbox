@@ -11,10 +11,7 @@ def Willems(Q, b_LH, a, w, return_exceed=False):
         w (float): case-speciﬁc average proportion of the quick ﬂow
                    in the streamflow, calibrated in baseflow.param_estimate
     """
-    if return_exceed:
-        b = np.zeros(Q.shape[0] + 1)
-    else:
-        b = np.zeros(Q.shape[0])
+    b = np.zeros(Q.shape[0] + 1) if return_exceed else np.zeros(Q.shape[0])
     b[0] = b_LH[0]
     v = (1 - w) * (1 - a) / (2 * w)
     for i in range(Q.shape[0] - 1):

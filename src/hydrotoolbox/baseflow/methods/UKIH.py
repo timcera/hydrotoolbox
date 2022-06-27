@@ -30,11 +30,7 @@ def UKIH_turn(Q, idx_min):
 
 
 def linear_interpolation(Q, idx_turn, return_exceed=False):
-    if return_exceed:
-        b = np.zeros(Q.shape[0] + 1)
-    else:
-        b = np.zeros(Q.shape[0])
-
+    b = np.zeros(Q.shape[0] + 1) if return_exceed else np.zeros(Q.shape[0])
     n = 0
     for i in range(idx_turn[0], idx_turn[-1] + 1):
         if i == idx_turn[n + 1]:

@@ -7,15 +7,14 @@ from tstoolbox import tsutils
 
 class Indices:
     def __init__(self, data, use_median=False, water_year="A-SEP"):
-        if isinstance(data, pd.DataFrame):
-            if len(data.columns) != 1:
-                raise ValueError(
-                    tsutils.error_wrapper(
-                        f"""
+        if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
+            raise ValueError(
+                tsutils.error_wrapper(
+                    f"""
 Can only calculate indices on 1 series, you gave {len(data.columns)}.
                                                        """
-                    )
                 )
+            )
 
         self.use_median = use_median
         self.water_year = water_year
@@ -384,9 +383,9 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
                 if eval(f"value {than} thresh"):
                     pdur = pdur + 1
                     flag = flag + 1
-                    allnp[group_name] = allnp[group_name] + 1
+                    allnp[group_name] += 1
                     if flag == 1:
-                        nnp[group_name] = nnp[group_name] + 1
+                        nnp[group_name] += 1
                 else:
                     flag = 0
             if nnp[group_name] > 0:
@@ -571,9 +570,7 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
             self.data[self.data == 0].groupby(pd.Grouper(freq=self.water_year)).count()
         )
         if any(stat):
-            if self.use_median is True:
-                return stat.median()
-            return stat.mean()
+            return stat.median() if self.use_median is True else stat.mean()
         return 0
 
     def DL19(self):
@@ -583,15 +580,11 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return stat.std() / stat.mean() * 100
 
     def DL20(self):
-        stat = self.data_monthly_mean[self.data_monthly_mean == 0].count()
-        return stat
+        return self.data_monthly_mean[self.data_monthly_mean == 0].count()
 
     def DH1(self):
         stat = self.data_yearly.max()
-        if self.use_median:
-            stat = stat.median()
-        else:
-            stat = stat.mean()
+        stat = stat.median() if self.use_median else stat.mean()
         return stat
 
     def DH2(self):
@@ -701,18 +694,19 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
 
         lq[self.data == 0.0] = np.log10(0.01)
 
-        table = []
-        table.append(lq[lq < 0.1 * lma1])
-        table.append(lq[(lq >= 0.1 * lma1) & (lq < 0.25 * lma1)])
-        table.append(lq[(lq >= 0.25 * lma1) & (lq < 0.5 * lma1)])
-        table.append(lq[(lq >= 0.5 * lma1) & (lq < 0.75 * lma1)])
-        table.append(lq[(lq >= 0.75 * lma1) & (lq < lma1)])
-        table.append(lq[(lq >= lma1) & (lq < 1.25 * lma1)])
-        table.append(lq[(lq >= 1.25 * lma1) & (lq < 1.5 * lma1)])
-        table.append(lq[(lq >= 1.5 * lma1) & (lq < 1.75 * lma1)])
-        table.append(lq[(lq >= 1.75 * lma1) & (lq < 2.0 * lma1)])
-        table.append(lq[(lq >= 2.0 * lma1) & (lq < 2.25 * lma1)])
-        table.append(lq[(lq >= 2.25 * lma1)])
+        table = [
+            lq[lq < 0.1 * lma1],
+            lq[(lq >= 0.1 * lma1) & (lq < 0.25 * lma1)],
+            lq[(lq >= 0.25 * lma1) & (lq < 0.5 * lma1)],
+            lq[(lq >= 0.5 * lma1) & (lq < 0.75 * lma1)],
+            lq[(lq >= 0.75 * lma1) & (lq < lma1)],
+            lq[(lq >= lma1) & (lq < 1.25 * lma1)],
+            lq[(lq >= 1.25 * lma1) & (lq < 1.5 * lma1)],
+            lq[(lq >= 1.5 * lma1) & (lq < 1.75 * lma1)],
+            lq[(lq >= 1.75 * lma1) & (lq < 2.0 * lma1)],
+            lq[(lq >= 2.0 * lma1) & (lq < 2.25 * lma1)],
+            lq[lq >= 2.25 * lma1],
+        ]
 
         ndf = pd.DataFrame()
         for indx, df in enumerate(table):
@@ -727,9 +721,7 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
                     axis="columns",
                 )
                 continue
-            ldf = []
-            for day in range(1, 366):
-                ldf.append(df[df.index.dayofyear == day].count())
+            ldf = [df[df.index.dayofyear == day].count() for day in range(1, 366)]
             ndf = pd.concat(
                 [ndf, pd.DataFrame(data=ldf, index=range(1, 366), columns=[indx])],
                 axis="columns",

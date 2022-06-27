@@ -29,10 +29,7 @@ def strict_baseflow(Q):
     # 4. Flow data followed by a data point with a larger value of -dQ/dt.
     wet4 = np.concatenate([[True], dQdt[1:] - dQdt[:-1] < 0, [True, True]])
 
-    # Dry points, namely strict baseflow.
-    dry = ~(wet1 + wet2 + wet3 + wet4)
-
-    return dry
+    return ~(wet1 + wet2 + wet3 + wet4)
 
 
 def KGE(simulations, evaluation):
@@ -73,7 +70,4 @@ def KGE(simulations, evaluation):
     beta = np.sum(simulations, axis=0, dtype=np.float64) / (
         np.sum(evaluation, axis=0, dtype=np.float64) + 1e-10
     )
-    # calculate the Kling-Gupta Efficiency KGE
-    kge_ = 1 - np.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2)
-
-    return kge_
+    return 1 - np.sqrt((r - 1) ** 2 + (alpha - 1) ** 2 + (beta - 1) ** 2)
