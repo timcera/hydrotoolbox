@@ -50,11 +50,7 @@ def clean_streamflow(date, Q):
 
 
 def clean_streamflow_jit(year, year_unique, Q):
-    year_delete = []
-    for y in year_unique:
-        if (Q[year == y] >= 0).sum() < 120:
-            year_delete.append(y)
-    return year_delete
+    return [y for y in year_unique if (Q[year == y] >= 0).sum() < 120]
 
 
 def moving_average(x, w):

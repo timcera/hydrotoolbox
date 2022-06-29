@@ -24,10 +24,7 @@ def hysep_interval(area):
     # and A is the drainage area in square miles (Linsley and others, 1982, p. 210).
     # The interval 2N* used for hydrograph separations is the odd integer between
     # 3 and 11 nearest to 2N (Pettyjohn and Henning, 1979, p. 31).
-    if area is None:
-        N = 5
-    else:
-        N = np.power(0.3861022 * area, 0.2)
+    N = 5 if area is None else np.power(0.3861022 * area, 0.2)
     inN = np.ceil(2 * N)
     if np.mod(inN, 2) == 0:
         inN = np.ceil(2 * N) - 1

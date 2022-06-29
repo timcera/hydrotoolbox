@@ -1401,10 +1401,7 @@ def indices(
             lu[(sclass, None)] = lu[(sclass, None)].union(lu[(sclass, fcomp)])
             lu[(None, fcomp)] = lu[(None, fcomp)].union(lu[(sclass, fcomp)])
 
-    hi = {}
-    for icode in indice_codes:
-        hi[icode] = getattr(indice_class, icode)()
-    return hi
+    return {icode: getattr(indice_class, icode)() for icode in indice_codes}
 
 
 @program.command()
