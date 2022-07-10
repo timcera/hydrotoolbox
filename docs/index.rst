@@ -3,7 +3,7 @@
 .. _hydrotoolbox_documentation:
 
 hydrotoolbox
-=========
+============
 
 This is the home page for hydrotoolbox.  hydrotoolbox is a command line program and
 Python library for hydrologic analysis.
