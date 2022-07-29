@@ -8,14 +8,17 @@ hydrotoolbox baseflow eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
-
+import datetime
 import os.path
+import re
 import sys
 import warnings
+from typing import Literal
 
+import numpy as np
 import pandas as pd
-from mando import Program
-from mando.rst_text_formatter import RSTHelpFormatter
+from cltoolbox import Program
+from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from scipy.ndimage import generic_filter, minimum_filter1d
 from scipy.signal import lfilter
 from scipy.stats import linregress
@@ -34,9 +37,15 @@ program.add_subprog("baseflow_sep")
 program.add_subprog("baseflow_identify")
 
 
-@program.baseflow_sep.command(
-    "boughton", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    return [atoi(c) for c in re.split(r"(\d+)", text)]
+
+
+@program.baseflow_sep.command("boughton", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.boughton)
 def _boughton_cli(
     input_ts="-",
@@ -75,9 +84,7 @@ def _boughton_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "chapman", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("chapman", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.chapman)
 def _chapman_cli(
     input_ts="-",
@@ -135,7 +142,7 @@ def _chapman_cli(
     )
 
 
-@program.baseflow_sep.command("cm", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.baseflow_sep.command("cm", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.cm)
 def _cm_cli(
     input_ts="-",
@@ -174,9 +181,7 @@ def _cm_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "eckhardt", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("eckhardt", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.eckhardt)
 def _eckhardt_cli(
     input_ts="-",
@@ -234,7 +239,7 @@ def _eckhardt_cli(
     )
 
 
-@program.baseflow_sep.command("ewma", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.baseflow_sep.command("ewma", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.ewma)
 def _ewma_cli(
     input_ts="-",
@@ -272,9 +277,7 @@ def _ewma_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "five_day", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("five_day", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.five_day)
 def _five_day_cli(
     input_ts="-",
@@ -312,9 +315,7 @@ def _five_day_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "furey", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("furey", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.furey)
 def _furey_cli(
     input_ts="-",
@@ -352,7 +353,7 @@ def _furey_cli(
     )
 
 
-@program.baseflow_sep.command("lh", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.baseflow_sep.command("lh", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.lh)
 def _lh_cli(
     input_ts="-",
@@ -390,9 +391,7 @@ def _lh_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "ihacres", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("ihacres", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.ihacres)
 def _ihacres_cli(
     k,
@@ -436,7 +435,7 @@ def _ihacres_cli(
     )
 
 
-@program.baseflow_sep.command("ukih", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.baseflow_sep.command("ukih", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.ukih)
 def _ukih_cli(
     input_ts="-",
@@ -474,9 +473,7 @@ def _ukih_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "willems", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("willems", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.willems)
 def _willems_cli(
     input_ts="-",
@@ -514,9 +511,7 @@ def _willems_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "usgs_hysep_fixed", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("usgs_hysep_fixed", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_fixed)
 def _usgs_hysep_fixed_cli(
     area=None,
@@ -556,9 +551,7 @@ def _usgs_hysep_fixed_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "usgs_hysep_local", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("usgs_hysep_local", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_local)
 def _usgs_hysep_local_cli(
     area=None,
@@ -598,9 +591,7 @@ def _usgs_hysep_local_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "usgs_hysep_slide", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("usgs_hysep_slide", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_slide)
 def _usgs_hysep_slide_cli(
     area=None,
@@ -640,9 +631,7 @@ def _usgs_hysep_slide_cli(
     )
 
 
-@program.baseflow_sep.command(
-    "strict", formatter_class=RSTHelpFormatter, doctype="numpy"
-)
+@program.baseflow_sep.command("strict", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.strict)
 def _strict_cli(
     input_ts="-",
@@ -739,7 +728,7 @@ def recession(
     return rc
 
 
-@program.command("recession", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.command("recession", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
 def _recession_cli(
     date=None,
@@ -802,10 +791,112 @@ def _recession_cli(
     )
 
 
-@program.command("indices", formatter_class=RSTHelpFormatter, doctype="numpy")
+@program.command("flow_duration", formatter_class=RSTHelpFormatter)
+@tsutils.doc(tsutils.docstrings)
+def _flow_duration_cli(
+    input_ts="-",
+    exceedance_probabilities=(99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5),
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    tablefmt="csv",
+):
+    """Flow duration.
+
+    Parameters
+    ----------
+    input_ts
+        Streamflow
+    exceedance_probabilities
+        [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
+
+        Exceedance probabilities
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${tablefmt}
+    """
+    tsutils.printiso(
+        flow_duration(
+            input_ts=input_ts,
+            exceedance_probabilities=exceedance_probabilities,
+            columns=columns,
+            source_units=source_units,
+            start_date=start_date,
+            end_date=end_date,
+            dropna=dropna,
+            clean=clean,
+            round_index=round_index,
+            skiprows=skiprows,
+            index_type=index_type,
+            names=names,
+            target_units=target_units,
+        ),
+        tablefmt=tablefmt,
+        showindex=True,
+    )
+
+
+@tsutils.copy_doc(_flow_duration_cli)
+def flow_duration(
+    input_ts="-",
+    exceedance_probabilities=(99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5),
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+):
+    Q = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    ndf = Q.quantile(np.array(exceedance_probabilities) / 100, axis="rows")
+    ndf.index.name = "Quantiles"
+    return ndf
+
+
+@program.command("indices", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
 def indices_cli(
     indice_codes,
+    water_year="A-SEP",
+    drainage_area=1,
+    use_median=False,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -821,16 +912,6 @@ def indices_cli(
     tablefmt="plain",
 ):
     """Calculate hydrologic indices.
-
-    Note the 1.67-year flood threshold (Poff, 1996) that applies to indices
-    FH11, DH22, DH23, DH24, TA3, and TH3 (below).  Compute the log10 of the
-    peak annual flows. Compute the log10 of the daily flows for the peak annual
-    flow days. Calculate the coefficients for a linear regression equation for
-    logs of peak annual flow versus logs of average daily flow for peak days.
-    Using the log peak flow for the 1.67 year recurrence interval (60th
-    percentile) as input to the regression equation, predict the log10 of the
-    average daily flow. The threshold is 10 to the log10 (average daily flow)
-    power.
 
     +------+--------------------------------------------------------------------+
     | Code | Description                                                        |
@@ -1195,12 +1276,6 @@ def indices_cli(
     |      | (or median) number of events.                                      |
     |      | number of events/year—temporal                                     |
     +------+--------------------------------------------------------------------+
-    | FH11 | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to flow corresponding to a number of |
-    |      | events/1.67-year recurrence interval (Poff, 1996; see index FH10   |
-    |      | for computation details). FH11 is the average (or median) number   |
-    |      | year—temporal                                                      |
-    +------+--------------------------------------------------------------------+
     | DL1  | Annual minimum daily flow. Compute the minimum 1-day average flow  |
     |      | for each year. DL1 is the mean (or median) of these cubic feet per |
     |      | values. second—temporal                                            |
@@ -1221,9 +1296,27 @@ def indices_cli(
     Parameters
     ----------
     indice_codes
-        A list of the hydrologic indice codes.
-    input_ts
-        Streamflow
+        A list of the hydrologic indice codes, stream classifications, and/or
+        flow regime indices to be computed.
+
+        The hydrologic indice codes are taken as is, but the collected stream
+        classifications are intersected with the flow regime indices.
+    ${input_ts}
+    water_year
+        [optional, default="A-SEP"]
+
+        The water year to use for the calculation.  This uses the one of the
+        "A-*" Pandas offset codes.  The "A-SEP" code represents the very end of
+        September (the start of October) as the end of the water year.
+    ${use_median}
+        [optional, default=False]
+
+        If True, use the median instead of the mean for the calculations.
+    ${drainage_area}
+        [optional, default=1]
+
+        The drainage area to use for the calculations.  This is the drainage
+        area in square miles.
     ${columns}
     ${source_units}
     ${start_date}
@@ -1245,6 +1338,9 @@ def indices_cli(
                 indices(
                     indice_codes,
                     input_ts=input_ts,
+                    water_year=water_year,
+                    drainage_area=drainage_area,
+                    use_median=use_median,
                     columns=columns,
                     source_units=source_units,
                     start_date=start_date,
@@ -1267,10 +1363,11 @@ def indices_cli(
 
 @tsutils.transform_args(indice_codes=tsutils.make_list)
 def indices(
-    indice_codes,
+    *indice_codes,
     input_ts="-",
-    stream_classification=None,
-    flow_component=None,
+    water_year="A-SEP",
+    drainage_area=1,
+    use_median=False,
     columns=None,
     source_units=None,
     start_date=None,
@@ -1285,6 +1382,7 @@ def indices(
 ):
     from .indices import indices as ind
 
+    indice_codes = list(indice_codes)
     Q = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -1301,74 +1399,9 @@ def indices(
         source_units=source_units,
         target_units=target_units,
     )
-    indice_class = ind.Indices(Q)
-
-    lu = {
-        (None, None): "",
-        ("HARSH_INTERMITTENT", "AVERAGE_MAGNITUDE"): {"MA34", "MA22", "MA16"},
-        ("HARSH_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML15", "ML1"},
-        ("HARSH_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH14", "MH9"},
-        ("HARSH_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
-        ("HARSH_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH5", "FH7"},
-        ("HARSH_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL2", "DL3"},
-        ("HARSH_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH5", "DH10", "DH22"},
-        ("HARSH_INTERMITTENT", "TIMING"): {"TH1", "TL2", "TH3"},
-        ("HARSH_INTERMITTENT", "RATE_OF_CHANGE"): {"RA4", "RA1", "RA5"},
-        ("FLASHY_INTERMITTENT", "AVERAGE_MAGNITUDE"): {"MA37", "MA18", "MA21", "MA9"},
-        ("FLASHY_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {"ML16", "ML6", "ML22", "ML15"},
-        ("FLASHY_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH4", "MH14", "MH7"},
-        ("FLASHY_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
-        ("FLASHY_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH7", "FH10"},
-        ("FLASHY_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL13", "DL16", "DL18"},
-        ("FLASHY_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH12", "DH13", "DH15", "DH23"},
-        ("FLASHY_INTERMITTENT", "TIMING"): {"TA1", "TA2", "TL1", "TH3"},
-        ("FLASHY_INTERMITTENT", "RATE_OF_CHANGE"): {"RA9", "RA6", "RA5", "RA7"},
-        ("SNOWMELT_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA29", "MA40"},
-        ("SNOWMELT_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML22"},
-        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH1", "MH20"},
-        ("SNOWMELT_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
-        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH8", "FH11"},
-        ("SNOWMELT_PERENNIAL", "LOW_FLOW_DURATION"): {"DL5", "DL16"},
-        ("SNOWMELT_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH16", "DH19"},
-        ("SNOWMELT_PERENNIAL", "TIMING"): {"TA1", "TA3"},
-        ("SNOWMELT_PERENNIAL", "RATE_OF_CHANGE"): {"RA1", "RA8"},
-        ("SNOW_RAIN_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA44"},
-        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML14"},
-        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH20"},
-        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
-        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH5"},
-        ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL13"},
-        ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH12", "DH24"},
-        ("SNOW_RAIN_PERENNIAL", "TIMING"): {"TA1", "TL1"},
-        ("SNOW_RAIN_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8"},
-        ("GROUNDWATER_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA41", "MA8"},
-        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML18", "ML14", "ML16"},
-        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH19", "MH10"},
-        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
-        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH6", "FH11"},
-        ("GROUNDWATER_PERENNIAL", "LOW_FLOW_DURATION"): {"DL9", "DL11", "DL16"},
-        ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH11", "DH15", "DH20"},
-        ("GROUNDWATER_PERENNIAL", "TIMING"): {"TA1", "TH1", "TL2"},
-        ("GROUNDWATER_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA5"},
-        ("FLASHY_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA26", "MA41", "MA10"},
-        ("FLASHY_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML14", "ML16"},
-        ("FLASHY_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH8", "MH14"},
-        ("FLASHY_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
-        ("FLASHY_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH4", "FH6", "FH7"},
-        ("FLASHY_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL10", "DL17"},
-        ("FLASHY_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH13", "DH16", "DH24"},
-        ("FLASHY_PERENNIAL", "TIMING"): {"TA1", "TA3", "TH3"},
-        ("FLASHY_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA7", "RA6"},
-        ("ALL_STREAMS", "AVERAGE_MAGNITUDE"): {"MA5", "MA41", "MA3", "MA11"},
-        ("ALL_STREAMS", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML4", "ML21", "ML18"},
-        ("ALL_STREAMS", "HIGH_FLOW_MAGNITUDE"): {"MH16", "MH8", "MH10", "MH14"},
-        ("ALL_STREAMS", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
-        ("ALL_STREAMS", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH6", "FH7"},
-        ("ALL_STREAMS", "LOW_FLOW_DURATION"): {"DL13", "DL16", "DL17", "DL18"},
-        ("ALL_STREAMS", "HIGH_FLOW_DURATION"): {"DH13", "DH15", "DH16", "DH20"},
-        ("ALL_STREAMS", "TIMING"): {"TA1", "TH3", "TL2"},
-        ("ALL_STREAMS", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA6", "RA5"},
-    }
+    indice_class = ind.Indices(
+        Q, water_year=water_year, use_median=use_median, drainage_area=drainage_area
+    )
 
     sclasses = [
         "HARSH_INTERMITTENT",
@@ -1379,8 +1412,6 @@ def indices(
         "FLASHY_PERENNIAL",
         "ALL_STREAMS",
     ]
-    for sclass in sclasses:
-        lu[(sclass, None)] = set()
 
     fcomps = [
         "AVERAGE_MAGNITUDE",
@@ -1393,15 +1424,324 @@ def indices(
         "TIMING",
         "RATE_OF_CHANGE",
     ]
-    for fcomp in fcomps:
-        lu[(None, fcomp)] = set()
 
-    for sclass in sclasses:
+    stream_classification = []
+    flow_component = []
+    for code in indice_codes:
+        if code.upper() in sclasses:
+            stream_classification.append(code)
+        if code.upper() in fcomps:
+            flow_component.append(code)
+
+    for code in stream_classification + flow_component:
+        indice_codes.remove(code)
+
+    if stream_classification or flow_component:
+        lu = {
+            ("HARSH_INTERMITTENT", "AVERAGE_MAGNITUDE"): {"MA34", "MA22", "MA16"},
+            ("HARSH_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML15", "ML1"},
+            ("HARSH_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH14", "MH9"},
+            ("HARSH_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+            ("HARSH_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH5", "FH7"},
+            ("HARSH_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL2", "DL3"},
+            ("HARSH_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH5", "DH10"},
+            ("HARSH_INTERMITTENT", "TIMING"): {"TH1", "TL2"},
+            ("HARSH_INTERMITTENT", "RATE_OF_CHANGE"): {"RA4", "RA1", "RA5"},
+            ("FLASHY_INTERMITTENT", "AVERAGE_MAGNITUDE"): {
+                "MA37",
+                "MA18",
+                "MA21",
+                "MA9",
+            },
+            ("FLASHY_INTERMITTENT", "LOW_FLOW_MAGNITUDE"): {
+                "ML16",
+                "ML6",
+                "ML22",
+                "ML15",
+            },
+            ("FLASHY_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {
+                "MH23",
+                "MH4",
+                "MH14",
+                "MH7",
+            },
+            ("FLASHY_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+            ("FLASHY_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {
+                "FH2",
+                "FH3",
+                "FH7",
+                "FH10",
+            },
+            ("FLASHY_INTERMITTENT", "LOW_FLOW_DURATION"): {
+                "DL1",
+                "DL13",
+                "DL16",
+                "DL18",
+            },
+            ("FLASHY_INTERMITTENT", "HIGH_FLOW_DURATION"): {
+                "DH12",
+                "DH13",
+                "DH15",
+            },
+            ("FLASHY_INTERMITTENT", "TIMING"): {"TA1", "TA2", "TL1"},
+            ("FLASHY_INTERMITTENT", "RATE_OF_CHANGE"): {"RA9", "RA6", "RA5", "RA7"},
+            ("SNOWMELT_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA29", "MA40"},
+            ("SNOWMELT_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML22"},
+            ("SNOWMELT_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH1", "MH20"},
+            ("SNOWMELT_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+            ("SNOWMELT_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH8"},
+            ("SNOWMELT_PERENNIAL", "LOW_FLOW_DURATION"): {"DL5", "DL16"},
+            ("SNOWMELT_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH16", "DH19"},
+            ("SNOWMELT_PERENNIAL", "TIMING"): {"TA1"},
+            ("SNOWMELT_PERENNIAL", "RATE_OF_CHANGE"): {"RA1", "RA8"},
+            ("SNOW_RAIN_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA44"},
+            ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML14"},
+            ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH20"},
+            ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+            ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH5"},
+            ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL13"},
+            ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH12"},
+            ("SNOW_RAIN_PERENNIAL", "TIMING"): {"TA1", "TL1"},
+            ("SNOW_RAIN_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8"},
+            ("GROUNDWATER_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA41", "MA8"},
+            ("GROUNDWATER_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML18", "ML14", "ML16"},
+            ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH19", "MH10"},
+            ("GROUNDWATER_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+            ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH6"},
+            ("GROUNDWATER_PERENNIAL", "LOW_FLOW_DURATION"): {"DL9", "DL11", "DL16"},
+            ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH11", "DH15", "DH20"},
+            ("GROUNDWATER_PERENNIAL", "TIMING"): {"TA1", "TH1", "TL2"},
+            ("GROUNDWATER_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA5"},
+            ("FLASHY_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA26", "MA41", "MA10"},
+            ("FLASHY_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML14", "ML16"},
+            ("FLASHY_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH8", "MH14"},
+            ("FLASHY_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
+            ("FLASHY_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH4", "FH6", "FH7"},
+            ("FLASHY_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL10", "DL17"},
+            ("FLASHY_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH13", "DH16"},
+            ("FLASHY_PERENNIAL", "TIMING"): {"TA1"},
+            ("FLASHY_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA7", "RA6"},
+            ("ALL_STREAMS", "AVERAGE_MAGNITUDE"): {"MA5", "MA41", "MA3", "MA11"},
+            ("ALL_STREAMS", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML4", "ML21", "ML18"},
+            ("ALL_STREAMS", "HIGH_FLOW_MAGNITUDE"): {"MH16", "MH8", "MH10", "MH14"},
+            ("ALL_STREAMS", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
+            ("ALL_STREAMS", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH6", "FH7"},
+            ("ALL_STREAMS", "LOW_FLOW_DURATION"): {"DL13", "DL16", "DL17", "DL18"},
+            ("ALL_STREAMS", "HIGH_FLOW_DURATION"): {"DH13", "DH15", "DH16", "DH20"},
+            ("ALL_STREAMS", "TIMING"): {"TA1", "TL2"},
+            ("ALL_STREAMS", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA6", "RA5"},
+        }
+
+        for sclass in sclasses:
+            lu[(sclass, None)] = set()
+
         for fcomp in fcomps:
-            lu[(sclass, None)] = lu[(sclass, None)].union(lu[(sclass, fcomp)])
-            lu[(None, fcomp)] = lu[(None, fcomp)].union(lu[(sclass, fcomp)])
+            lu[(None, fcomp)] = set()
 
-    return {icode: getattr(indice_class, icode)() for icode in indice_codes}
+        for sclass in sclasses:
+            for fcomp in fcomps:
+                lu[(sclass, None)] = lu[(sclass, None)].union(lu[(sclass, fcomp)])
+                lu[(None, fcomp)] = lu[(None, fcomp)].union(lu[(sclass, fcomp)])
+
+        if not stream_classification:
+            stream_classification = [None]
+        if not flow_component:
+            flow_component = [None]
+
+        class_codes = []
+        for sc in stream_classification:
+            for fc in flow_component:
+                if sc is not None:
+                    sc = sc.upper()
+                if fc is not None:
+                    fc = fc.upper()
+                class_codes.extend(lu[(sc, fc)])
+    else:
+        class_codes = []
+
+    return {
+        icode: getattr(indice_class, icode)()
+        for icode in indice_codes + sorted(class_codes, key=natural_keys)
+    }
+
+
+@program.command("exceedance_time", formatter_class=RSTHelpFormatter)
+@tsutils.doc(tsutils.docstrings)
+def exceedance_time_cli(
+    input_ts="-",
+    delays=0,
+    under_over="over",
+    time_units="day",
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    *thresholds,
+):
+    """Calculate the time that a time series exceeds (or is below) a threshold.
+
+    Calculate the time that a time series exceeds (or is below) a threshold.
+
+    Parameters
+    ----------
+    thresholds: list
+        List of thresholds to calculate exceedance for.
+    ${input_ts}
+    delays: list
+        [optional, default 0]
+
+        List of delays to calculate exceedance for.  This can be an empty list
+        in which case the delays are all 0.  If one delay is given, then each
+        flow requires a delay term.
+    under_over: str
+        [optional, default "over"]
+
+        Whether to calculate exceedance or under-exceedance.
+    time_units: str
+        [optional, default "day"]
+
+        Units for the delays and the returned exceedance time.  Can be any
+        of the following strings: "year", "month", "day", "hour", "min", or "sec".
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    """
+    ans = exceedance_time(
+        input_ts=input_ts,
+        delays=delays,
+        under_over=under_over,
+        time_units=time_units,
+        columns=columns,
+        source_units=source_units,
+        start_date=start_date,
+        end_date=end_date,
+        dropna=dropna,
+        clean=clean,
+        round_index=round_index,
+        skiprows=skiprows,
+        index_type=index_type,
+        names=names,
+        target_units=target_units,
+        *thresholds,
+    )
+    ans = [(key, value) for key, value in ans.items()]
+    tsutils.printiso(
+        ans,
+        float_format=".3f",
+        headers=["Flow", f"Exceedance Time ({under_over} {time_units})"],
+    )
+
+
+def exceedance_time(
+    *thresholds,
+    input_ts="-",
+    delays=0,
+    under_over="over",
+    time_units: Literal["year", "month", "day", "hour", "min", "sec"] = "day",
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+):
+    series = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    punits = {
+        "year": datetime.timedelta(days=365.25),
+        "month": datetime.timedelta(days=30.5),
+        "day": datetime.timedelta(days=1),
+        "hour": datetime.timedelta(hours=1),
+        "min": datetime.timedelta(minutes=1),
+        "sec": datetime.timedelta(seconds=1),
+    }.get(time_units, time_units)
+
+    series = pd.Series(series.iloc[:, 0])
+
+    input_delays = tsutils.make_list(delays)
+    if input_delays == [0]:
+        input_delays = [0] * len(thresholds)
+
+    if len(input_delays) != len(thresholds):
+        raise ValueError(
+            tsutils.error_wrapper(
+                "If any delay is given, then there must be a delay specified for each flow."
+            )
+        )
+
+    input_delays = [i * punits for i in input_delays]
+    e_table = {}
+    thresholds = [float(i) for i in thresholds]
+    for flow, delay in zip(thresholds, input_delays):
+        if under_over == "over":
+            mask = series >= flow
+        else:
+            mask = series <= flow
+
+        accum = datetime.timedelta(days=0)
+        duration = datetime.timedelta(days=0)
+        first = True
+        for index, value in mask.iteritems():
+            if pd.isna(value):
+                continue
+            if first is True:
+                oindex = index
+                ovalue = value
+                first = False
+                continue
+            delta = index - oindex
+            if ovalue == True and value == True:
+                accum += delta
+            elif ovalue == False and value == True:
+                accum += (
+                    (series[index] - flow) / (series[index] - series[oindex]) * delta
+                )
+            elif ovalue == True and value == False:
+                accum += (
+                    (series[oindex] - flow) / (series[oindex] - series[index]) * delta
+                )
+                duration = duration + max(datetime.timedelta(days=0), accum - delay)
+                accum = datetime.timedelta(days=0)
+            oindex = index
+            ovalue = value
+        duration = duration + max(datetime.timedelta(days=0), accum - delay)
+        e_table[flow] = duration
+    return e_table
 
 
 @program.command()

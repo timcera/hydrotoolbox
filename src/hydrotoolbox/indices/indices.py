@@ -6,7 +6,7 @@ from tstoolbox import tsutils
 
 
 class Indices:
-    def __init__(self, data, use_median=False, water_year="A-SEP"):
+    def __init__(self, data, use_median=False, water_year="A-SEP", drainage_area=1):
         if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
             raise ValueError(
                 tsutils.error_wrapper(
@@ -18,6 +18,7 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
 
         self.use_median = use_median
         self.water_year = water_year
+        self.drainage_area = float(drainage_area)
 
         self.data = pd.Series(data.iloc[:, 0].values, index=data.index)
         self.data[self.data < 0] = pd.NA
@@ -38,12 +39,23 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         self.log10data = np.log10(self.data)
 
     def MA1(self):
+        """MA1
+        Mean of the daily mean flow values for the entire flow record.
+        cubic feet per second—temporal"""
         return self.data.mean()
 
     def MA2(self):
+        """MA2
+        Median of the daily mean flow values for the entire flow record.
+        cubic feet per second—temporal"""
         return self.data.median()
 
     def MA3(self):
+        """MA3
+        Mean (or median) of the coefficients of variation (standard deviation/mean)
+        for each year.  Compute the coefficient of variation for each year of daily
+        flows. Compute the mean of the annual coefficients of variation.
+        percent—temporal"""
         tmpdata = (
             self.data.groupby(pd.Grouper(freq=self.water_year)).std().mean()
             / self.MA1()
@@ -53,6 +65,17 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return tmpdata.mean() * 100
 
     def MA4(self):
+        """MA4
+        Standard deviation of the percentiles of the logs of the entire flow record
+        divided by the mean of percentiles of the logs.   Compute the log10 of the
+        daily flows for the entire record.  Compute the 5th, 10th, 15th, 20th,
+        25th, 30th, 35th, 40th, 45th, 50th, 55th, 60th, 65th, 70th, 75th, 80th,
+        85th, 90th, and 95th  percentiles for the logs of the entire flow record.
+
+        Percentiles are computed by interpolating between the ordered (ascending)
+        logs of the flow values. Compute the standard    deviation and mean for the
+        percentile values. Divide the standard deviation by the mean.
+        percent–spatial"""
         p = [
             0.05,
             0.10,
@@ -78,25 +101,67 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return newp.std() / newp.mean() * 100
 
     def MA5(self):
-        return self.data.mean() / self.data.median()
+        """MA5
+        The skewness of the entire flow record is computed as the mean for the
+        entire flow record (MA1) divided by the median (MA2) for the entire flow
+        record.
+        dimensionless—spatial"""
+        return self.data.mean() / self.MA2()
 
-    def MA6(self):
-        return self.data.quantile(0.9) / self.data.quantile(0.1)
+    def _make_MA_6_8(high, low):
+        def template(self):
+            return self.data.quantile(high) / self.data.quantile(low)
 
-    def MA7(self):
-        return self.data.quantile(0.8) / self.data.quantile(0.2)
+        return template
 
-    def MA8(self):
-        return self.data.quantile(0.75) / self.data.quantile(0.25)
+    MA6 = _make_MA_6_8(0.9, 0.1)
+    MA6.__doc__ = """MA6
+Range in daily flows is the ratio of the 10-percent to 90-percent  exceedance
+values for the entire flow record. Compute the 5-percent to 95-percent
+exceedance values for the entire flow record. Exceedance is computed by
+interpolating between the   ordered (descending) flow values.  Divide the
+10-percent exceedance value by the 90-percent value.
+dimensionless—spatial"""
+    MA7 = _make_MA_6_8(0.8, 0.2)
+    MA7.__doc__ = """MA7
+Range in daily flows is computed like MA6, except using the 20 percent and 80
+percent exceedance values. Divide the 20 percent exceedance value by the 80
+percent value.
+dimensionless—spatial"""
+    MA8 = _make_MA_6_8(0.75, 0.25)
+    MA8.__doc__ = """MA8
+Range in daily flows is computed like MA6, except using the 25-percent and
+75-percent exceedance values. Divide the 25-percent exceedance value by the
+75-percent value.
+dimensionless—spatial"""
 
-    def MA9(self):
-        return (self.data.quantile(0.9) - self.data.quantile(0.1)) / self.MA2()
+    def _make_MA_9_11(high, low):
+        def template(self):
+            return (self.data.quantile(high) - self.data.quantile(low)) / self.MA2()
 
-    def MA10(self):
-        return (self.data.quantile(0.8) - self.data.quantile(0.2)) / self.MA2()
+        return template
 
-    def MA11(self):
-        return (self.data.quantile(0.75) - self.data.quantile(0.25)) / self.MA2()
+    MA9 = _make_MA_9_11(0.9, 0.1)
+    MA9.__doc__ = """MA9
+Spread in daily flows is the ratio of the difference between the 90th and 10th
+percentile of the logs of the flow data to the log of the median of the entire
+flow record. Compute the log10 of the daily flows for the entire record.
+Compute the 5th, 10th, 15th, 20th, 25th, 30th, 35th, 40th, 45th, 50th, 55th,
+60th, 65th, 70th, 75th, 80th, 85th, 90th, and 95th percentiles for the logs of
+the entire flow record. Percentiles are computed by interpolating between the
+ordered (ascending) logs of the flow values.  Compute MA9 as (90th –10th)
+/log10(MA2).
+dimensionless—spatial"""
+    MA10 = _make_MA_9_11(0.8, 0.2)
+    MA10.__doc__ = """MA10
+Spread in daily flows is computed like MA9, except using the 20th and 80th
+percentiles.
+dimensionless—spatial"""
+    MA11 = _make_MA_9_11(0.75, 0.25)
+    MA11.__doc__ = """MA11
+Spread in daily flows is computed like MA9, except using the 25th and 75th
+percentiles.
+dimensionless—spatial"""
 
     def _make_MA_12_23(month):
         def template(self):
@@ -107,17 +172,105 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return template
 
     MA12 = _make_MA_12_23(1)
+    MA12.__doc__ = """MA12
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA12 is the mean of all January flow values over the entire record
+(cubic feet per second— temporal)."""
     MA13 = _make_MA_12_23(2)
+    MA13.__doc__ = """MA13
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA13 is the mean of all February flow values over the entire record
+MA12 is the mean of all January flow values over the entire record
+(cubic feet per second— temporal)."""
     MA14 = _make_MA_12_23(3)
+    MA14.__doc__ = """MA14
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA14 is the mean of all March flow values over the entire record
+MA12 is the mean of all January flow values over the entire record
+(cubic feet per second— temporal)."""
     MA15 = _make_MA_12_23(4)
+    MA15.__doc__ = """MA15
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA15 is the mean of all April flow values over the entire record
+MA12 is the mean of all January flow values over the entire record
+(cubic feet per second— temporal)."""
     MA16 = _make_MA_12_23(5)
+    MA16.__doc__ = """MA16
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA16 is the mean of all May flow values over the entire record
+MA12 is the mean of all January flow values over the entire record
+(cubic feet per second— temporal)."""
     MA17 = _make_MA_12_23(6)
+    MA17.__doc__ = """MA17
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA17 is the mean of all June flow values over the entire record
+(cubic feet per second— temporal)."""
     MA18 = _make_MA_12_23(7)
+    MA18.__doc__ = """MA18
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA18 is the mean of all July flow values over the entire record
+(cubic feet per second— temporal)."""
     MA19 = _make_MA_12_23(8)
+    MA19.__doc__ = """MA19
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA19 is the mean of all August flow values over the entire record
+(cubic feet per second— temporal)."""
     MA20 = _make_MA_12_23(9)
+    MA20.__doc__ = """MA20
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA20 is the mean of all September flow values over the entire record
+(cubic feet per second— temporal)."""
     MA21 = _make_MA_12_23(10)
+    MA21.__doc__ = """MA21
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA21 is the mean of all October flow values over the entire record
+(cubic feet per second— temporal)."""
     MA22 = _make_MA_12_23(11)
+    MA22.__doc__ = """MA22
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA22 is the mean of all November flow values over the entire record
+(cubic feet per second— temporal)."""
     MA23 = _make_MA_12_23(12)
+    MA23.__doc__ = """MA23
+Means (or medians) of monthly flow values. Compute the means for each.  Means
+(or medians) of monthly flow values. Compute the means for each month over the
+entire flow record.
+
+MA23 is the mean of all December flow values over the entire record
+(cubic feet per second— temporal)."""
 
     def _make_MA_24_35(month):
         def template(self):
@@ -132,62 +285,227 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return template
 
     MA24 = _make_MA_24_35(1)
+    MA24.__doc__ = """MA24
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA24 is the variability of all January flow values over the entire record.
+percent—temporal"""
     MA25 = _make_MA_24_35(2)
+    MA25.__doc__ = """MA25
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA25 is the variability of all February flow values over the entire record.
+percent—temporal"""
     MA26 = _make_MA_24_35(3)
+    MA26.__doc__ = """MA26
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA26 is the variability of all March flow values over the entire record.
+percent—temporal"""
     MA27 = _make_MA_24_35(4)
+    MA27.__doc__ = """MA27
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA27 is the variability of all April flow values over the entire record.
+percent—temporal"""
     MA28 = _make_MA_24_35(5)
+    MA28.__doc__ = """MA28
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA28 is the variability of all May flow values over the entire record.
+percent—temporal"""
     MA29 = _make_MA_24_35(6)
+    MA29.__doc__ = """MA29
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA29 is the variability of all June flow values over the entire record.
+percent—temporal"""
     MA30 = _make_MA_24_35(7)
+    MA30.__doc__ = """MA30
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA30 is the variability of all July flow values over the entire record.
+percent—temporal"""
     MA31 = _make_MA_24_35(8)
+    MA31.__doc__ = """MA31
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA31 is the variability of all August flow values over the entire record.
+percent—temporal"""
     MA32 = _make_MA_24_35(9)
+    MA32.__doc__ = """MA32
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA32 is the variability of all September flow values over the entire record.
+percent—temporal"""
     MA33 = _make_MA_24_35(10)
+    MA33.__doc__ = """
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA33 is the variability of all October flow values over the entire record.
+percent—temporal"""
     MA34 = _make_MA_24_35(11)
+    MA34.__doc__ = """MA34
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA34 is the variability of all November flow values over the entire record.
+percent—temporal"""
     MA35 = _make_MA_24_35(12)
+    MA35.__doc__ = """MA35
+Variability (coefficient of variation) of monthly flow values. Compute the
+standard deviation for each.  Variability (coefficient of month in each year
+over the entire flow record. Divide the standard deviation by the mean for each
+month. Average (or take median of) these values for each month across all
+years.
+
+MA35 is the variability of all December flow values over the entire record.
+percent—temporal"""
 
     def MA36(self):
+        """MA36
+        Variability across monthly flows. Compute the minimum, maximum, and
+        mean flows for each month in the entire flow record.  MA36 is the
+        maximum monthly flow minus the minimum monthly flow divided by the
+        median monthly flow.
+        dimensionless-spatial"""
         return (
             max(self.data_monthly_mean) - min(self.data_monthly_mean)
         ) / self.data_monthly_mean.median()
 
-    def MA37(self):
-        return (
-            self.data_monthly_mean.quantile(0.75)
-            - self.data_monthly_mean.quantile(0.25)
-        ) / self.data_monthly_mean.median()
+    def _make_MA_37_38(high, low):
+        def template(self):
+            return (
+                self.data_monthly_mean.quantile(high)
+                - self.data_monthly_mean.quantile(low)
+            ) / self.data_monthly_mean.median()
 
-    def MA38(self):
-        return (
-            self.data_monthly_mean.quantile(0.90)
-            - self.data_monthly_mean.quantile(0.10)
-        ) / self.data_monthly_mean.median()
+        return template
+
+    MA37 = _make_MA_37_38(0.75, 0.25)
+    MA37.__doc__ = """MA37
+Variability across monthly flows. Compute the first (25th percentile) and the
+third (75th percentile) quartiles (every month in dimensionless— the flow
+record). MA37 is the third quartile minus the first quartile divided by the
+median of the monthly means.
+dimensionless-spatial"""
+    MA38 = _make_MA_37_38(0.9, 0.1)
+    MA38.__doc__ = """MA38
+Variability across monthly flows. Compute the 10th and 90th percentiles for the
+monthly means (every month in the flow record). MA38 is the 90th percentile
+minus the 10th percentile divided by the median of the monthly means.
+dimensionless—spatial"""
 
     def MA39(self):
+        """MA39
+        Variability across monthly flows. Compute the standard deviation for
+        the monthly means. MA39 is the standard deviation times 100 divided by
+        the mean of the monthly means.
+        percent—spatial"""
         return self.data_monthly_mean.std() / self.data_monthly_mean.mean() * 100
 
     def MA40(self):
+        """MA40
+        Skewness in the monthly flows. MA40 is the mean of the monthly flow
+        means minus the median of the monthly means divided by the median of
+        the monthly means.
+        dimensionles-sspatial"""
         return (
             self.data_monthly_mean.mean() - self.data_monthly_mean.median()
         ) / self.data_monthly_mean.median()
 
-    def MA41(self, carea=1):
-        return self.data_yearly_mean.mean() / carea
+    def MA41(self):
+        """MA41
+        Annual runoff. Compute the annual mean daily flows. MA41 is the mean of
+        the annual means divided by the drainage area.
+        cubic feet per second/ square mile—temporal"""
+        return self.data_yearly_mean.mean() / self.drainage_area
 
     def MA42(self):
+        """MA42
+        Variability across annual flows. MA42 is the maximum annual flow minus
+        the minimum annual flow divided by the median annual flow.
+        dimensionless-spatial"""
         return (
             max(self.data_yearly_mean) - min(self.data_yearly_mean)
         ) / self.data_yearly_mean.median()
 
-    def MA43(self):
-        return (
-            self.data_yearly_mean.quantile(0.75) - self.data_yearly_mean.quantile(0.25)
-        ) / self.data_yearly_mean.median()
+    def _make_MA_43_44(high, low):
+        def template(self):
+            return (
+                self.data_yearly_mean.quantile(high)
+                - self.data_yearly_mean.quantile(low)
+            ) / self.data_yearly_mean.median()
 
-    def MA44(self):
-        return (
-            self.data_yearly_mean.quantile(0.90) - self.data_yearly_mean.quantile(0.10)
-        ) / self.data_yearly_mean.median()
+        return template
+
+    MA43 = _make_MA_43_44(0.75, 0.25)
+    MA43.__doc__ = """MA43
+Variability across annual flows. Compute the first (25th percentile) and third
+(75th percentile) quartiles for the annual means (every year in the flow
+record).
+
+MA43 is the third quartile minus the first quartile divided by the median of
+the annual means.
+dimensionless-spatial"""
+    MA44 = _make_MA_43_44(0.9, 0.1)
+    MA44.__doc__ = """MA44
+Variability across annual flows. Compute the 10th and 90th percentiles for the
+annual means (every year in the flow record).
+
+MA44 is the 90th percentile minus the 10th percentile divided by the median of
+the annual means.
+dimensionless-spatial"""
 
     def MA45(self):
+        """MA45
+        Skewness in the annual flows. MA45 is the mean of the annual flow means
+        minus the median of the annual means divided by the median of the
+        annual means.
+        dimensionless-spatial"""
         return (
             self.data_yearly_mean.mean() - self.data_yearly_mean.median()
         ) / self.data_yearly_mean.median()
@@ -205,111 +523,361 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         return template
 
     ML1 = _make_ML_1_12(1)
+    ML1.__doc__ = """ML1
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML1 is the mean of the minimums of all January flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML2 = _make_ML_1_12(2)
+    ML2.__doc__ = """ML2
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML2 is the mean of the minimums of all February flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML3 = _make_ML_1_12(3)
+    ML3.__doc__ = """ML3
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML3 is the mean of the minimums of all March flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML4 = _make_ML_1_12(4)
+    ML4.__doc__ = """ML4
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML4 is the mean of the minimums of all April flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML5 = _make_ML_1_12(5)
+    ML5.__doc__ = """ML5
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML5 is the mean of the minimums of all May flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML6 = _make_ML_1_12(6)
+    ML6.__doc__ = """ML6
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML6 is the mean of the minimums of all June flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML7 = _make_ML_1_12(7)
+    ML7.__doc__ = """ML7
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML7 is the mean of the minimums of all July flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML8 = _make_ML_1_12(8)
+    ML8.__doc__ = """ML8
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML8 is the mean of the minimums of all August flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML9 = _make_ML_1_12(9)
+    ML9.__doc__ = """ML9
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML9 is the mean of the minimums of all September flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML10 = _make_ML_1_12(10)
+    ML10.__doc__ = """ML10
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML10 is the mean of the minimums of all October flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML11 = _make_ML_1_12(11)
+    ML11.__doc__ = """ML11
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML11 is the mean of the minimums of all November flow values over the entire
+record.
+cubic feet per second—temporal"""
     ML12 = _make_ML_1_12(12)
+    ML12.__doc__ = """ML12
+Mean (or median) of minimum flows for each month across all years. Compute the
+minimums for each month over the entire flow record.
+
+ML12 is the mean of the minimums of all December flow values over the entire
+record.
+cubic feet per second—temporal"""
 
     def ML13(self):
+        """ML13
+        Variability (coefficient of variation) across minimum monthly flow
+        values. Compute the mean and standard deviation for the minimum monthly
+        flows over the entire flow record. ML13 is the standard deviation times
+        100 divided by the mean minimum monthly flow for all years.
+        percent—spatial"""
         return self.data_monthly_min.std() / self.data_monthly_min.mean() * 100
 
     def ML14(self):
+        """ML14
+        Compute the minimum annual flow for each year. ML14 is the mean of the
+        ratios of minimum annual flows to the median flow for each year.
+        dimensionless—temporal"""
         return (
             self.data_yearly_min
             / self.data.groupby(pd.Grouper(freq=self.water_year)).median()
         ).mean()
 
     def ML15(self):
+        """ML15
+        Low-flow index. ML15 is the mean of the ratios of minimum annual flows
+        to the mean flow for each year.
+        dimensionless—temporal"""
         return (self.data_yearly_min / self.data_yearly_mean).mean()
 
     def ML16(self):
+        """ML16
+        Median of annual minimum flows. ML16 is the median of the ratios of
+        minimum annual flows to the median flow for each year.
+        dimensionless— temporal"""
         return (self.data_yearly_min / self.data_yearly.median()).median()
 
     def ML17(self):
-        if self.use_median is True:
-            return (
-                self.data.rolling(7)
-                .mean()
-                .groupby(pd.Grouper(freq=self.water_year))
-                .min()
-                / self.data_yearly_mean
-            ).median()
-        return (
+        """ML17
+        Base flow. Compute the mean annual flows. Compute the minimum of
+        a 7-day moving average flows for each year and divide them by the mean
+        annual flow for that year. ML17 is the mean (or median if use_median is
+        set) of those ratios.
+        dimensionless—temporal"""
+        stat = (
             self.data.rolling(7).mean().groupby(pd.Grouper(freq=self.water_year)).min()
             / self.data_yearly_mean
-        ).mean()
+        )
+        if self.use_median is True:
+            return stat.median()
+        return stat.mean()
 
     def ML18(self):
+        """ML18
+        Variability in base flow. Compute the standard deviation for the ratios
+        of 7-day moving average flows to mean annual flows for each year. ML18
+        is the standard deviation times 100 divided by the mean of the ratios.
+        percent—spatial"""
         ratios = (
             self.data.rolling(7).mean().groupby(pd.Grouper(freq=self.water_year))
         ).min() / self.data_yearly_mean
         return ratios.std() / ratios.mean() * 100
 
     def ML19(self):
+        """ML19
+        Base flow. Compute the ratios of the minimum annual flow to mean annual
+        flow for each year. ML19 is the mean (or median) of these ratios times
+        100.
+        dimensionless—temporal"""
         if self.use_median is True:
             return (self.data_yearly_min / self.data_yearly_mean).median() * 100
         return (self.data_yearly_min / self.data_yearly_mean).mean() * 100
 
     def ML20(self):
-        from hydrotoolbox.hydrotoolbox import five_day
+        """ML20
+        Base flow. Divide the daily flow record into 5-day blocks. Find the
+        minimum flow for each block. Assign the minimum flow as a base flow for
+        that block if 90 percent of that minimum flow is less than the minimum
+        flows for the blocks on either side. Otherwise, set it to zero. Fill in
+        the zero values using linear interpolation. Compute the total flow for
+        the entire record and the total base flow for the entire record. ML20
+        is the ratio of total flow to total base flow.
+        dimensionless—spatial"""
+        from ..baseflow_sep import five_day
 
         newq = five_day(self.data)
         return (newq.sum() / self.data.sum()).iloc[0]
 
     def ML21(self):
+        """ML21
+        Variability across annual minimum flows. Compute the mean and standard
+        deviation for the annual minimum flows. ML21 is the standard deviation
+        times 100 divided by the mean.
+        percent—spatial"""
         return self.data_yearly_min.std() / self.data_yearly_min.mean() * 100
 
-    def ML22(self, carea=100):
-        return self.data_yearly_min.mean() / carea
+    def ML22(self):
+        """ML22
+        Specific mean annual minimum flow. ML22 is the mean (or median) of the
+        annual minimum flows divided by the drainage area.
+        cubic feet per second/square mile—temporal"""
+        return self.data_yearly_min.mean() / self.drainage_area
 
     def _make_MH_1_12(month):
         def template(self):
+            stat = self.data_monthly_max[self.data_monthly_max.index.month == month]
             if self.use_median is True:
-                return self.data_monthly_max[
-                    self.data_monthly_max.index.month == month
-                ].median()
-            return self.data_monthly_max[
-                self.data_monthly_max.index.month == month
-            ].mean()
+                return stat.median()
+            return stat.mean()
 
         return template
 
     MH1 = _make_MH_1_12(1)
+    MH1.__doc__ = """MH1
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH1 is the mean of the maximums of all January flow values over the entire
+record.
+second—temporal"""
     MH2 = _make_MH_1_12(2)
+    MH2.__doc__ = """MH2
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH2 is the mean of the maximums of all February flow values over the entire
+record.
+second—temporal"""
     MH3 = _make_MH_1_12(3)
+    MH3.__doc__ = """MH3
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH3 is the mean of the maximums of all March flow values over the entire
+record.
+second—temporal"""
     MH4 = _make_MH_1_12(4)
+    MH4.__doc__ = """MH4
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH4 is the mean of the maximums of all April flow values over the entire
+record.
+second—temporal"""
     MH5 = _make_MH_1_12(5)
+    MH5.__doc__ = """MH5
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH5 is the mean of the maximums of all May flow values over the entire
+record.
+second—temporal"""
     MH6 = _make_MH_1_12(6)
+    MH6.__doc__ = """MH6
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH6 is the mean of the maximums of all June flow values over the entire
+record.
+second—temporal"""
     MH7 = _make_MH_1_12(7)
+    MH7.__doc__ = """MH7
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH7 is the mean of the maximums of all July flow values over the entire
+record.
+second—temporal"""
     MH8 = _make_MH_1_12(8)
+    MH8.__doc__ = """MH8
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH8 is the mean of the maximums of all August flow values over the entire
+record.
+second—temporal"""
     MH9 = _make_MH_1_12(9)
+    MH9.__doc__ = """MH9
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH9 is the mean of the maximums of all September flow values over the entire
+record.
+second—temporal"""
     MH10 = _make_MH_1_12(10)
+    MH10.__doc__ = """MH10
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH10 is the mean of the maximums of all October flow values over the entire
+record.
+second—temporal"""
     MH11 = _make_MH_1_12(11)
+    MH11.__doc__ = """MH11
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH11 is the mean of the maximums of all November flow values over the entire
+record.
+second—temporal"""
     MH12 = _make_MH_1_12(12)
+    MH12.__doc__ = """MH12
+Mean (or median) maximum flows for each month across all years. Compute the
+maximums for each month over the entire cubic feet per flow record.
+
+MH12 is the mean of the maximums of all December flow values over the entire
+record.
+second—temporal"""
 
     def MH13(self):
+        """MH13
+        Variability (coefficient of variation) across maximum monthly flow
+        values. Compute the mean and standard deviation for the maximum monthly
+        flows over the entire flow record. MH13 is the standard deviation times
+        100 divided by the mean maximum monthly flow for all years.
+        percent—spatial"""
         return self.data_monthly_max.std() / self.data_monthly_max.mean() * 100
 
     def MH14(self):
+        """MH14
+        Median of annual maximum flows. Compute the annual maximum flows from
+        monthly maximum flows. Compute the ratio of annual maximum flow to
+        median annual flow for each year. MH14 is the median of these ratios.
+        dimensionless—temporal"""
         return (self.data_yearly_max / self.data_yearly.median()).median()
 
-    def MH15(self):
-        return self.data.quantile(0.99) / self.data.median()
+    def _MH_15_17(quant):
+        def template(self):
+            return self.data.quantile(quant) / self.MA2()
 
-    def MH16(self):
-        return self.data.quantile(0.90) / self.data.median()
+        return template
 
-    def MH17(self):
-        return self.data.quantile(0.75) / self.data.median()
+    MH15 = _MH_15_17(0.99)
+    MH15.__doc__ = """MH15
+High flow discharge index. Compute the 1-percent exceedance value for the
+entire data record.
+
+MH15 is the 1-percent exceedance value divided by the median flow for the
+entire record.
+dimensionless—spatial"""
+    MH16 = _MH_15_17(0.90)
+    MH16.__doc__ = """MH16
+High flow discharge index. Compute the 1-percent exceedance value for the
+entire data record.
+
+MH16 is the 10-percent exceedance value divided by the median flow for the
+entire record.
+dimensionless—spatial"""
+    MH17 = _MH_15_17(0.75)
+    MH17.__doc__ = """MH17
+High flow discharge index. Compute the 1-percent exceedance value for the
+entire data record.
+
+MH17 is the 25-percent exceedance value divided by the median flow for the
+entire record.
+dimensionless—spatial"""
 
     def MH18(self):
+        """MH18
+        Variability across annual maximum flows. Compute the logs (log10) of
+        the maximum annual flows. Find the standard percent—spatial deviation
+        and mean for these values. MH18 is the standard deviation times 100
+        divided by the mean."""
         log10 = np.log10(self.data_yearly_max)
         return log10.std() / log10.mean() * 100
 
@@ -323,22 +891,25 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
             + 2 * (qm.sum()) ** 3
         ) / (N * (N - 1) * (N - 2) * S**3)
 
-    def MH20(self, carea=1):
+    def MH20(self):
         if self.use_median:
-            return self.data_yearly_max.median() / carea
-        return self.data_yearly_max.mean() / carea
+            return self.data_yearly_max.median() / self.drainage_area
+        return self.data_yearly_max.mean() / self.drainage_area
 
     def _make_MH_21_23(med_mult):
         def template(self):
             med = self.MA2()
-            flow = self.data - med_mult * med
+            flow = self.data - (med_mult * med)
+
             flow[flow < 0] = 0.0
             if flow[flow > 0].count() == 0:
                 return None
 
+            # Mean of the yearly volume (sum of flows) above the median
+            # * med_mult
             qmean = flow.groupby(pd.Grouper(freq=self.water_year)).sum().mean()
 
-            nevents = (flow > 0) & (flow.shift(-1) <= 0)
+            nevents = (flow > 0) & (flow.shift(-1) == 0)
             nevents = nevents.groupby(pd.Grouper(freq=self.water_year)).sum().mean()
 
             return qmean / nevents / med
@@ -353,9 +924,9 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         def template(self):
 
             if quantile is not None:
-                medm = self.data.quantile(0.75)
+                medm = self.data.quantile(quantile)
             else:
-                medm = self.data.median() * med_mult
+                medm = self.MA2() * med_mult
 
             peaks, _ = find_peaks(self.data, height=medm)
             return self.data[peaks].mean() / self.MA2()
@@ -425,54 +996,45 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         nnp, _, _ = self._lf(thresh, ">")
         return nnp.std() / nnp.mean() * 100
 
-    def FH3(self):
-        thresh = 3 * self.MA2()
-        _, _, pdur = self._lf(thresh, ">")
-        if self.use_median is True:
-            return pdur.median()
-        return pdur.mean()
+    def _make_FH_3_4(med_mult):
+        def template(self):
+            thresh = med_mult * self.MA2()
+            _, _, pdur = self._lf(thresh, ">")
+            if self.use_median is True:
+                return pdur.median()
+            return pdur.mean()
 
-    def FH4(self):
-        thresh = 7 * self.MA2()
-        _, _, pdur = self._lf(thresh, ">")
-        if self.use_median is True:
-            return pdur.median()
-        return pdur.mean()
+        return template
 
-    def FH5(self):
-        thresh = self.MA2()
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+    FH3 = _make_FH_3_4(3)
+    FH4 = _make_FH_3_4(7)
 
-    def FH6(self):
-        thresh = self.MA2() * 3
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+    def _make_FH_5_7(med_mult):
+        def template(self):
+            thresh = self.MA2() * med_mult
+            nnp, _, _ = self._lf(thresh, ">")
+            if self.use_median is True:
+                return nnp.median()
+            return nnp.mean()
 
-    def FH7(self):
-        thresh = self.MA2() * 7
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+        return template
 
-    def FH8(self):
-        thresh = self.data.quantile(0.75)
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+    FH5 = _make_FH_5_7(1)
+    FH6 = _make_FH_5_7(3)
+    FH7 = _make_FH_5_7(7)
 
-    def FH9(self):
-        thresh = self.data.quantile(0.25)
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+    def _make_FH_8_9(quant):
+        def template(self):
+            thresh = self.data.quantile(quant)
+            nnp, _, _ = self._lf(thresh, ">")
+            if self.use_median is True:
+                return nnp.median()
+            return nnp.mean()
+
+        return template
+
+    FH8 = _make_FH_8_9(0.75)
+    FH9 = _make_FH_8_9(0.25)
 
     def FH10(self):
         thresh = self.data_yearly.min().median()
@@ -480,9 +1042,6 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         if self.use_median is True:
             return nnp.median()
         return nnp.mean()
-
-    def FH11(self):
-        return 1.0
 
     def DL1(self):
         stat = self.data_yearly.min()
@@ -506,54 +1065,48 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
             return stat.median()
         return stat.mean()
 
-    def DL2(self):
-        return self._roll(3, "min")
+    def _make_DL_2_5_DH_2_5(days, stat):
+        def template(self):
+            return self._roll(days, stat)
 
-    def DL3(self):
-        return self._roll(7, "min")
+        return template
 
-    def DL4(self):
-        return self._roll(30, "min")
+    DL2 = _make_DL_2_5_DH_2_5(3, "min")
+    DL3 = _make_DL_2_5_DH_2_5(7, "min")
+    DL4 = _make_DL_2_5_DH_2_5(30, "min")
+    DL5 = _make_DL_2_5_DH_2_5(90, "min")
 
-    def DL5(self):
-        return self._roll(90, "min")
+    def _make_DL_6_10_DH_6_10(days, instat):
+        def template(self):
+            stat = self._preroll(days, instat)
+            return stat.std() / stat.mean() * 100
 
-    def DL6(self):
-        stat = self._preroll(1, "min")
-        return stat.std() / stat.mean() * 100
+        return template
 
-    def DL7(self):
-        stat = self._preroll(3, "min")
-        return stat.std() / stat.mean() * 100
-
-    def DL8(self):
-        stat = self._preroll(7, "min")
-        return stat.std() / stat.mean() * 100
-
-    def DL9(self):
-        stat = self._preroll(30, "min")
-        return stat.std() / stat.mean() * 100
-
-    def DL10(self):
-        stat = self._preroll(90, "min")
-        return stat.std() / stat.mean() * 100
+    DL6 = _make_DL_6_10_DH_6_10(1, "min")
+    DL7 = _make_DL_6_10_DH_6_10(3, "min")
+    DL8 = _make_DL_6_10_DH_6_10(7, "min")
+    DL9 = _make_DL_6_10_DH_6_10(30, "min")
+    DL10 = _make_DL_6_10_DH_6_10(90, "min")
 
     def DL11(self):
-        return self.data_yearly_min.mean() / self.data.median()
+        return self.data_yearly_min.mean() / self.MA2()
 
-    def DL12(self):
-        stat = self._preroll(7, "min")
-        return stat.mean() / self.data.median()
+    def _make_DL_12_13_DH_12_13(days, instat):
+        def template(self):
+            stat = self._preroll(days, instat)
+            return stat.mean() / self.MA2()
 
-    def DL13(self):
-        stat = self._preroll(30, "min")
-        return stat.mean() / self.data.median()
+        return template
+
+    DL12 = _make_DL_12_13_DH_12_13(7, "min")
+    DL13 = _make_DL_12_13_DH_12_13(30, "min")
 
     def DL14(self):
-        return self.data.quantile(0.25) / self.data.median()
+        return self.data.quantile(0.25) / self.MA2()
 
     def DL15(self):
-        return self.data.quantile(0.1) / self.data.median()
+        return self.data.quantile(0.1) / self.MA2()
 
     def DL16(self):
         thresh = self.data.quantile(0.25)
@@ -587,48 +1140,22 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         stat = stat.median() if self.use_median else stat.mean()
         return stat
 
-    def DH2(self):
-        return self._roll(3, "max")
+    DH2 = _make_DL_2_5_DH_2_5(3, "max")
+    DH3 = _make_DL_2_5_DH_2_5(7, "max")
+    DH4 = _make_DL_2_5_DH_2_5(30, "max")
+    DH5 = _make_DL_2_5_DH_2_5(90, "max")
 
-    def DH3(self):
-        return self._roll(7, "max")
-
-    def DH4(self):
-        return self._roll(30, "max")
-
-    def DH5(self):
-        return self._roll(90, "max")
-
-    def DH6(self):
-        stat = self._preroll(1, "max")
-        return stat.std() / stat.mean() * 100
-
-    def DH7(self):
-        stat = self._preroll(3, "max")
-        return stat.std() / stat.mean() * 100
-
-    def DH8(self):
-        stat = self._preroll(7, "max")
-        return stat.std() / stat.mean() * 100
-
-    def DH9(self):
-        stat = self._preroll(30, "max")
-        return stat.std() / stat.mean() * 100
-
-    def DH10(self):
-        stat = self._preroll(90, "max")
-        return stat.std() / stat.mean() * 100
+    DH6 = _make_DL_6_10_DH_6_10(1, "max")
+    DH7 = _make_DL_6_10_DH_6_10(3, "max")
+    DH8 = _make_DL_6_10_DH_6_10(7, "max")
+    DH9 = _make_DL_6_10_DH_6_10(30, "max")
+    DH10 = _make_DL_6_10_DH_6_10(90, "max")
 
     def DH11(self):
-        return self.data_yearly_max.mean() / self.data.median()
+        return self.data_yearly_max.mean() / self.MA2()
 
-    def DH12(self):
-        stat = self._preroll(7, "max")
-        return stat.mean() / self.data.median()
-
-    def DH13(self):
-        stat = self._preroll(30, "max")
-        return stat.mean() / self.data.median()
+    DH12 = _make_DL_12_13_DH_12_13(7, "max")
+    DH13 = _make_DL_12_13_DH_12_13(30, "max")
 
     def DH14(self):
         return self.data_monthly_mean.quantile(0.95) / self.data_monthly_mean.mean()
@@ -677,15 +1204,6 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         if self.use_median:
             return lfdur.median()
         return lfdur.mean()
-
-    def DH22(self):
-        return None
-
-    def DH23(self):
-        return None
-
-    def DH24(self):
-        return None
 
     def _pre_ta1_ta2(self):
         nrows = 11
@@ -743,29 +1261,77 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         nrows, HY, HXY = self._pre_ta1_ta2()
         return 100 * (1 - (HXY / np.log10(nrows)))
 
-    def TA3(self):
-        return None
+    def _min_max_doy(self, stat):
+        if stat == "min":
+            jd = (
+                self.data.groupby(pd.Grouper(freq=self.water_year))
+                .idxmin()
+                .dt.dayofyear
+            )
+        if stat == "max":
+            jd = (
+                self.data.groupby(pd.Grouper(freq=self.water_year))
+                .idxmax()
+                .dt.dayofyear
+            )
+        jd[jd > 365.25] = jd[jd > 365.25] - 365.25
+        jd = jd * 2 * np.pi / 365.25
+        xbar = np.cos(jd).mean()
+        ybar = np.sin(jd).mean()
+        return xbar, ybar
 
     def TL1(self):
-        return None
+        """TL1
+        Julian date of annual minimum. Determine the Julian date of the minimum
+        flow for each water year. Transform the dates to relative values on
+        a circular scale (radians or degrees). Compute the x and y components
+        for each year, and average them across all years. Compute the mean
+        angle as the arc tangent of y-mean divided by x-mean. Transform the
+        resultant angle back to Julian date.
+        Julian day—spatial"""
+        xbar, ybar = self._min_max_doy("min")
+        TL1 = np.arctan2(ybar, xbar) * 180.0 / np.pi
+        if TL1 < 0.0:
+            TL1 = TL1 + 360.0
+        TL1 = TL1 * 365.25 / 360.0
+        return TL1
 
     def TL2(self):
-        return None
-
-    def TL3(self):
-        return None
-
-    def TL4(self):
-        return None
+        """TL2
+        Variability in Julian date of annual minima. Compute the coefficient of
+        variation for the mean x and y components, and convert to a date.
+        Julian day—spatial"""
+        xbar, ybar = self._min_max_doy("min")
+        temp = np.sqrt(xbar * xbar + ybar * ybar)
+        temp = np.sqrt(2 * (1 - temp))
+        TL2 = temp * 180 / np.pi / 360 * 365.25
+        return TL2
 
     def TH1(self):
-        return None
+        """TH1
+        Julian date of annual maximum. Determine the Julian date of the maximum flow
+        for each year. Transform the dates to relative values on a circular scale
+        (radians or degrees). Compute the x and y components for each year, and average
+        them across all years. Compute the mean angle as the arc tangent of y-mean
+        divided by x-mean. Transform the resultant angle back to Julian date.
+        Julian day—spatial"""
+        xbar, ybar = self._min_max_doy("max")
+        TH1 = np.arctan2(ybar, xbar) * 180.0 / np.pi
+        if TH1 < 0.0:
+            TH1 = TH1 + 360.0
+        TH1 = TH1 * 365.25 / 360.0
+        return TH1
 
     def TH2(self):
-        return None
-
-    def TH3(self):
-        return None
+        """TH2
+        Variability in Julian date of annual maxima. Compute the coefficient of
+        variation for the mean x and y components and convert to a date.
+        Julian days—spatial"""
+        xbar, ybar = self._min_max_doy("max")
+        temp = np.sqrt(xbar * xbar + ybar * ybar)
+        temp = np.sqrt(2 * (1 - temp))
+        TH2 = temp * 180 / np.pi / 360 * 365.25
+        return TH2
 
     def _rise_rate(self):
         delt = self.data.shift(1) - self.data
@@ -945,7 +1511,6 @@ if __name__ == "__main__":
     print("FH8 = ", ind.FH8())
     print("FH9 = ", ind.FH9())
     print("FH10 = ", ind.FH10())
-    print("FH11 = ", ind.FH11())
     print("DL1 = ", ind.DL1())
     print("DL2 = ", ind.DL2())
     print("DL3 = ", ind.DL3())
@@ -987,19 +1552,12 @@ if __name__ == "__main__":
     print("DH19 = ", ind.DH19())
     print("DH20 = ", ind.DH20())
     print("DH21 = ", ind.DH21())
-    print("DH22 = ", ind.DH22())
-    print("DH23 = ", ind.DH23())
-    print("DH24 = ", ind.DH24())
     print("TA1 = ", ind.TA1())
     print("TA2 = ", ind.TA2())
-    print("TA3 = ", ind.TA3())
     print("TL1 = ", ind.TL1())
     print("TL2 = ", ind.TL2())
-    print("TL3 = ", ind.TL3())
-    print("TL4 = ", ind.TL4())
     print("TH1 = ", ind.TH1())
     print("TH2 = ", ind.TH2())
-    print("TH3 = ", ind.TH3())
     print("RA1 = ", ind.RA1())
     print("RA2 = ", ind.RA2())
     print("RA3 = ", ind.RA3())
