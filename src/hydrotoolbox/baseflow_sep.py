@@ -60,9 +60,11 @@ def boughton(
 ):
     """Boughton double-parameter filter (Boughton, 2004)
 
-    !             C             k
-    !    Qb   = -----  Q   +  -----  Qb
-    !      i    1 + C   i     1 + C    (i-1)
+    ::
+
+      |           C             k
+      |  Qb   = -----  Q   +  -----  Qb
+      |    i    1 + C   i     1 + C    (i-1)
 
     Parameters
     ----------
@@ -174,9 +176,11 @@ def cm(
 ):
     """CM filter (Chapman and Maxwell, 1996)
 
-    !           1 - k           k
-    !    Qb   = -----  Q   +  -----  Qb
-    !      i    2 - k   i     2 - k    (i-1)
+    ::
+
+     |          1 - k           k
+     |   Qb   = -----  Q   +  -----  Qb
+     |     i    2 - k   i     2 - k    (i-1)
 
     Parameters
     ----------
