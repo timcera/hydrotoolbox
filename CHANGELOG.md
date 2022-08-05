@@ -1,3 +1,9 @@
+## 1.2.0 (2022-08-05)
+
+### Feat
+
+- **storm_events**: added the storm_events function
+
 ## 1.1.0 (2022-07-29)
 
 ### Feat
