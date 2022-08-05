@@ -20,7 +20,7 @@ import pandas as pd
 from cltoolbox import Program
 from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from scipy.ndimage import generic_filter, minimum_filter1d
-from scipy.signal import lfilter
+from scipy.signal import find_peaks, lfilter
 from scipy.stats import linregress
 from tstoolbox import tsutils
 
@@ -34,7 +34,7 @@ program = Program("hydrotoolbox", "0.0")
 
 program.add_subprog("baseflow_sep")
 
-program.add_subprog("baseflow_identify")
+# program.add_subprog("baseflow_identify")
 
 
 def atoi(text):
@@ -885,8 +885,126 @@ def flow_duration(
         source_units=source_units,
         target_units=target_units,
     )
-    ndf = Q.quantile(np.array(exceedance_probabilities) / 100, axis="rows")
+    exceedance_probabilities = np.array(exceedance_probabilities) / 100
+    ndf = Q.quantile((1 - exceedance_probabilities), axis="rows")
+    ndf.index = exceedance_probabilities
     ndf.index.name = "Quantiles"
+    return ndf
+
+
+@program.command("storm_events", formatter_class=RSTHelpFormatter)
+@tsutils.doc(tsutils.docstrings)
+def _storm_events_cli(
+    rise_lag,
+    fall_lag,
+    input_ts="-",
+    window=1,
+    min_peak=0,
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    tablefmt="plain",
+):
+    """Storm events.
+
+    Parameters
+    ----------
+    input_ts
+        Streamflow
+    rise_lag,
+    fall_lag,
+    window=1,
+    min_peak=0,
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${tablefmt}
+    """
+    tsutils.printiso(
+        storm_events(
+            rise_lag=rise_lag,
+            fall_lag=fall_lag,
+            input_ts=input_ts,
+            window=window,
+            min_peak=min_peak,
+            columns=columns,
+            source_units=source_units,
+            start_date=start_date,
+            end_date=end_date,
+            dropna=dropna,
+            clean=clean,
+            round_index=round_index,
+            skiprows=skiprows,
+            index_type=index_type,
+            names=names,
+            target_units=target_units,
+        ),
+        tablefmt=tablefmt,
+    )
+
+
+@tsutils.copy_doc(_storm_events_cli)
+def storm_events(
+    rise_lag,
+    fall_lag,
+    input_ts="-",
+    min_peak=None,
+    window=1,
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+):
+    Q = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    if min_peak is None:
+        min_peak = Q.median()
+    peaks, _ = find_peaks(
+        Q.iloc[:, 0].astype("float64"), distance=window, height=min_peak
+    )
+    collected = set()
+    for pk in peaks:
+        collected.update(range(pk - int(rise_lag), pk + int(fall_lag) + 1))
+    index = sorted(list(collected))
+    ndf = pd.DataFrame(Q.iloc[index, 0])
+    ndf.columns = Q.columns
     return ndf
 
 
@@ -1559,8 +1677,182 @@ def indices(
     else:
         class_codes = []
 
+    description = {
+        "MA1": "Mean of all daily flows",
+        "MA2": "Median of all daily flows",
+        "MA3": "CV of all daily flows",
+        "MA4": "CV of  log of all daily flows",
+        "MA5": "Mean daily flow/median daily flow",
+        "MA6": "Q10/Q90 for all daily flows",
+        "MA7": "Q20/Q80 for all daily flows",
+        "MA8": "Q25/Q75 for all daily flows",
+        "MA9": "(Q10-Q90)/median daily flow",
+        "MA10": "(Q20-Q80)/median daily flow",
+        "MA11": "(Q25-Q75)/median daily flow",
+        "MA12": "Mean monthly flow: January",
+        "MA13": "Mean monthly flow: February",
+        "MA14": "Mean monthly flow: March",
+        "MA15": "Mean monthly flow: April",
+        "MA16": "Mean monthly flow: May",
+        "MA17": "Mean monthly flow: June",
+        "MA18": "Mean monthly flow: July",
+        "MA19": "Mean monthly flow: August",
+        "MA20": "Mean monthly flow: September",
+        "MA21": "Mean monthly flow: October",
+        "MA22": "Mean monthly flow: November",
+        "MA23": "Mean monthly flow: December",
+        "MA24": "CV of monthly flow: January",
+        "MA25": "CV of monthly flow: February",
+        "MA26": "CV of monthly flow: March",
+        "MA27": "CV of monthly flow: April",
+        "MA28": "CV of monthly flow: May",
+        "MA29": "CV of monthly flow: June",
+        "MA30": "CV of monthly flow: July",
+        "MA31": "CV of monthly flow: August",
+        "MA32": "CV of monthly flow: September",
+        "MA33": "CV of monthly flow: October",
+        "MA34": "CV of monthly flow: November",
+        "MA35": "CV of monthly flow: December",
+        "MA36": "Range mean monthly/median monthly flow",
+        "MA37": "IQR mean monthly/median monthly flow",
+        "MA38": "(Q10-Q90)[monthly]/median monthly flow",
+        "MA39": "CV: monthly mean flows",
+        "MA40": "Skewness in monthly flows",
+        "MA41": "Mean annual runoff",
+        "MA42": "Range mean annual/median annual flow",
+        "MA43": "IQR mean annual/median annual flow",
+        "MA44": "(Q10-Q90)[annual]/median annual flow",
+        "MA45": "Skewness in annual flows",
+        "ML1": "Mean minimum monthly flow: January",
+        "ML2": "Mean minimum monthly flow: February",
+        "ML3": "Mean minimum monthly flow: March",
+        "ML4": "Mean minimum monthly flow: April",
+        "ML5": "Mean minimum monthly flow: May",
+        "ML6": "Mean minimum monthly flow: June",
+        "ML7": "Mean minimum monthly flow: July",
+        "ML8": "Mean minimum monthly flow: August",
+        "ML9": "Mean minimum monthly flow: September",
+        "ML10": "Mean minimum monthly flow: October",
+        "ML11": "Mean minimum monthly flow: November",
+        "ML12": "Mean minimum monthly flow: December",
+        "ML13": "CV of minimum monthly flows",
+        "ML14": "Mean minimum daily flow/mean median annual flow",
+        "ML15": "Mean minimum annual flow/mean annual flow",
+        "ML16": "Median minimum annual flow/median annual flow",
+        "ML17": "7-day minimum flow/mean annual flow",
+        "ML18": "CV of (7-day minimum flow/mean annual)",
+        "ML19": "Mean of (minimum annual flow/mean annual)*100",
+        "ML20": "Ratio of baseflow volume to total flow volume",
+        "ML21": "CV of annual minimum flows",
+        "ML22": "Mean annual minimum flow divided by catchment area",
+        "MH1": "Mean maximum monthly flow: January",
+        "MH2": "Mean maximum monthly flow: February",
+        "MH3": "Mean maximum monthly flow: March",
+        "MH4": "Mean maximum monthly flow: April",
+        "MH5": "Mean maximum monthly flow: May",
+        "MH6": "Mean maximum monthly flow: June",
+        "MH7": "Mean maximum monthly flow: July",
+        "MH8": "Mean maximum monthly flow: August",
+        "MH9": "Mean maximum monthly flow: September",
+        "MH10": "Mean maximum monthly flow: October",
+        "MH11": "Mean maximum monthly flow: November",
+        "MH12": "Mean maximum monthly flow: December",
+        "MH13": "CV of maximum monthly flows",
+        "MH14": "Median maximum annual flow/median annual flow",
+        "MH15": "Mean of Q1 values/median daily flow across all years",
+        "MH16": "Mean of Q10 values/median daily flow across all years",
+        "MH17": "Mean of Q25 values/median daily flow across all years",
+        "MH18": "CV of logarithmic annual maximum flows",
+        "MH19": "Skewness in annual maximum flows",
+        "MH20": "Mean annual maximum flow/catchment area",
+        "MH21": "High-flow volume (thresh=1*median annual)",
+        "MH22": "High-flow volume (thresh=3*median annual)",
+        "MH23": "High-flow volume (thresh=7*median annual)",
+        "MH24": "Maximum peak flow/median flow (thresh=1*median annual)",
+        "MH25": "Maximum peak flow/median flow (thresh=3*median annual)",
+        "MH26": "Maximum peak flow/median flow (thresh=7*median annual)",
+        "MH27": "Maximum peak flow/median flow (threshold=Q25)",
+        "FL1": "Annual low flow pulse count; number of periods<25th percentile",
+        "FL2": "CV of low flow pulse count",
+        "FL3": "Count of low flow spells (<5% of mean)/record length (yrs)",
+        "FH1": "Annual high flow pulse count; number of periods>75th percentile",
+        "FH2": "CV of high flow pulse count",
+        "FH3": "Count of high flow events (>3*median annual)",
+        "FH4": "Count of high flow events (>7*median annual)",
+        "FH5": "Count of high flow events (>1*median annual)/record length (yrs)",
+        "FH6": "Count of high flow events (>3*median annual)/record length (yrs)",
+        "FH7": "Count of high flow events (>7*median annual)/record length (yrs)",
+        "FH8": "Count of high flow events (>25th percentile)/record length (yrs)",
+        "FH9": "Count of high flow events (>75th percentile)/record length (yrs)",
+        "FH10": "Count of high flow events (>median of annual minima)/record length (yrs)",
+        "FH11": "Mean number of discrete flood events per year",
+        "DL1": "Annual minimum of 1-day mean of flow",
+        "DL2": "Annual minimum of 3-day mean of flow",
+        "DL3": "Annual minimum of 7-day mean of flow",
+        "DL4": "Annual minimum of 30-day mean of flow",
+        "DL5": "Annual minimum of 90-day mean of flow",
+        "DL6": "CV: annual minimum of 1-day mean of flow",
+        "DL7": "CV: annual minimum of 3-day mean of flow",
+        "DL8": "CV: annual minimum of 7-day mean of flow",
+        "DL9": "CV: annual minimum of 30-day mean of flow",
+        "DL10": "CV: annual minimum of 90-day mean of flow",
+        "DL11": "Mean of 1-day minimum of flow",
+        "DL12": "Mean of 7-day minimum of flow",
+        "DL13": "Mean of 30-day minimum of flow",
+        "DL14": "Mean of Q75 values/median daily flow across all years",
+        "DL15": "Mean of Q90 values/median daily flow across all years",
+        "DL16": "Low flow pulse duration (Mean duration of FL1)",
+        "DL17": "CV: low flow pulse duration (DL16)",
+        "DL18": "Mean annual number of zero-flow days",
+        "DL19": "CV: mean annual number of zero-flow days",
+        "DL20": "Percentage of all months with zero flow",
+        "DH1": "Annual maximum of 1-day mean of flow",
+        "DH2": "Annual maximum of 3-day mean of flow",
+        "DH3": "Annual maximum of 7-day mean of flow",
+        "DH4": "Annual maximum of 30-day mean of flow",
+        "DH5": "Annual maximum of 90-day mean of flow",
+        "DH6": "CV: annual maximum of 1-day mean of flow",
+        "DH7": "CV: annual maximum of 3-day mean of flow",
+        "DH8": "CV: annual maximum of 7-day mean of flow",
+        "DH9": "CV: annual maximum of 30-day mean of flow",
+        "DH10": "CV: annual maximum of 90-day mean of flow",
+        "DH11": "Mean of 1-day maximum of flow",
+        "DH12": "Mean of 7-day maximum of flow",
+        "DH13": "Mean of 30-day maximum of flow",
+        "DH14": "Q95 value/mean monthly flow across all years",
+        "DH15": "Mean duration of flood pulses>75th percentile flow",
+        "DH16": "CV: mean duration of high flow pulse (FH1)",
+        "DH17": "Mean duration of flood pulses>1*median flow",
+        "DH18": "Mean duration of flood pulses>3*median flow",
+        "DH19": "Mean duration of flood pulses>7*median flow",
+        "DH20": "Mean duration of flood pulses>25th percentile of median flow",
+        "DH21": "Mean duration of flood pulses>75th percentile of median flow",
+        "DH22": "Mean annual median interval in days between floods over all years",
+        "DH23": "Mean annual number of days that flows>threshold over all years",
+        "DH24": "Mean annual maximum number of 365-day periods in which no floods occur",
+        "TA1": "Constancy (see Colwell: 1974)",
+        "TA2": "Predictability of flow",
+        "TA3": "Seasonal predictability of flooding",
+        "TL1": "Mean day-of-year of annual minimum",
+        "TL2": "CV: day-of-year of annual minimum",
+        "TL3": "Seasonal predictability of low flow",
+        "TL4": "Seasonal predictability of non-low flow",
+        "TH1": "Mean day-of-year of annual maximum",
+        "TH2": "CV: day-of-year of annual maximum",
+        "TH3": "Seasonal predictability of non-flooding",
+        "RA1": "Mean of positive changes from one day to next (rise rate)",
+        "RA2": "CV: mean of positive changes from one day to next (rise rate)",
+        "RA3": "Mean of negative changes from one day to next (fall rate)",
+        "RA4": "CV: mean of negative changes from one day to next (fall rate)",
+        "RA5": "Ratio of days that are higher than previous day",
+        "RA6": "Median of difference in log of flows over two consecutive days of rising flow",
+        "RA7": "Median of difference in log of flows over two consecutive days of falling flow",
+        "RA8": "Number of flow reversals from one day to the next",
+        "RA9": "CV: number of flow reversals from one day to the next",
+    }
+
     return {
-        icode: getattr(indice_class, icode)()
+        f"{icode}: {description[icode]}": getattr(indice_class, icode)()
         for icode in indice_codes + sorted(class_codes, key=natural_keys)
     }
 
