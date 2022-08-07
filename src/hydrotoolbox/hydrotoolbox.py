@@ -17,6 +17,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+import typic
 from cltoolbox import Program
 from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from scipy.ndimage import generic_filter, minimum_filter1d
@@ -1001,7 +1002,9 @@ def storm_events(
     )
     collected = set()
     for pk in peaks:
-        collected.update(range(pk - int(rise_lag), pk + int(fall_lag) + 1))
+        collected.update(
+            range(pk - int(float(rise_lag)), pk + int(float(fall_lag)) + 1)
+        )
     index = sorted(list(collected))
     ndf = pd.DataFrame(Q.iloc[index, 0])
     ndf.columns = Q.columns
@@ -1940,6 +1943,7 @@ def exceedance_time_cli(
     )
 
 
+@typic.al
 def exceedance_time(
     *thresholds,
     input_ts="-",
@@ -1974,9 +1978,11 @@ def exceedance_time(
         source_units=source_units,
         target_units=target_units,
     )
+
+    year = datetime.timedelta(days=365, hours=6, minutes=9, seconds=9)
     punits = {
-        "year": datetime.timedelta(days=365.25),
-        "month": datetime.timedelta(days=30.5),
+        "year": year,
+        "month": year / 12,
         "day": datetime.timedelta(days=1),
         "hour": datetime.timedelta(hours=1),
         "min": datetime.timedelta(minutes=1),
@@ -1985,21 +1991,24 @@ def exceedance_time(
 
     series = pd.Series(series.iloc[:, 0])
 
-    input_delays = tsutils.make_list(delays)
-    if input_delays == [0]:
-        input_delays = [0] * len(thresholds)
+    if isinstance(delays, (int, float)):
+        delays = [delays]
+    if delays == [0]:
+        delays = [0] * len(thresholds)
+    else:
+        delays = delays
+    delays = [i * punits for i in delays]
 
-    if len(input_delays) != len(thresholds):
+    if len(delays) != len(thresholds):
         raise ValueError(
             tsutils.error_wrapper(
                 "If any delay is given, then there must be a delay specified for each flow."
             )
         )
 
-    input_delays = [i * punits for i in input_delays]
     e_table = {}
     thresholds = [float(i) for i in thresholds]
-    for flow, delay in zip(thresholds, input_delays):
+    for flow, delay in zip(thresholds, delays):
         if under_over == "over":
             mask = series >= flow
         else:
@@ -2032,7 +2041,7 @@ def exceedance_time(
             oindex = index
             ovalue = value
         duration = duration + max(datetime.timedelta(days=0), accum - delay)
-        e_table[flow] = duration
+        e_table[flow] = duration / punits
     return e_table
 
 
