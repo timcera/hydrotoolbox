@@ -1,3 +1,13 @@
+## 1.3.0 (2022-09-05)
+
+### Feat
+
+- adopt process to deal with negative and missing flow values
+
+### Fix
+
+- completed all unit support in exceedance_time and fixed rise_lag and fall_lag to ints in storm_events
+
 ## 1.2.0 (2022-08-05)
 
 ### Feat
