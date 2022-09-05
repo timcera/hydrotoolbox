@@ -23,7 +23,7 @@ from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from scipy.ndimage import generic_filter, minimum_filter1d
 from scipy.signal import find_peaks, lfilter
 from scipy.stats import linregress
-from tstoolbox import tsutils
+from toolbox_utils import tsutils
 
 from . import baseflow_sep
 from .baseflow.comparison import strict_baseflow
@@ -918,12 +918,23 @@ def _storm_events_cli(
 
     Parameters
     ----------
-    input_ts
-        Streamflow
-    rise_lag,
-    fall_lag,
-    window=1,
-    min_peak=0,
+    rise_lag: int
+        Sets the number of time-series terms to include from the rising limb of
+        the hydrograph.
+    fall_lag: int
+        Sets the number of time-series terms to include from the falling limb of
+        the hydrograph. window=1
+    min_peak: int, float
+        [optional, default=0]
+
+        All detected storm peaks in the hydrograph must be greater than
+        `min_peak`.
+    window: int
+        [optional, default=1]
+
+        Adjacent peaks can not be within `window` time-series terms of each
+        other.
+    ${input_ts}
     ${columns}
     ${source_units}
     ${start_date}
@@ -1013,7 +1024,7 @@ def storm_events(
 
 @program.command("indices", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
-def indices_cli(
+def _indices_cli(
     indice_codes,
     water_year="A-SEP",
     drainage_area=1,
@@ -1422,22 +1433,22 @@ def indices_cli(
 
         The hydrologic indice codes are taken as is, but the collected stream
         classifications are intersected with the flow regime indices.
-    ${input_ts}
     water_year
         [optional, default="A-SEP"]
 
         The water year to use for the calculation.  This uses the one of the
-        "A-*" Pandas offset codes.  The "A-SEP" code represents the very end of
+        "A-..." Pandas offset codes.  The "A-SEP" code represents the very end of
         September (the start of October) as the end of the water year.
-    ${use_median}
+    use_median: bool
         [optional, default=False]
 
         If True, use the median instead of the mean for the calculations.
-    ${drainage_area}
+    drainage_area
         [optional, default=1]
 
         The drainage area to use for the calculations.  This is the drainage
         area in square miles.
+    ${input_ts}
     ${columns}
     ${source_units}
     ${start_date}
@@ -1862,7 +1873,7 @@ def indices(
 
 @program.command("exceedance_time", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
-def exceedance_time_cli(
+def _exceedance_time_cli(
     input_ts="-",
     delays=0,
     under_over="over",
@@ -2002,7 +2013,10 @@ def exceedance_time(
     if len(delays) != len(thresholds):
         raise ValueError(
             tsutils.error_wrapper(
-                "If any delay is given, then there must be a delay specified for each flow."
+                """
+                If any delay is given, then there must be a delay specified
+                for each flow.
+                """
             )
         )
 

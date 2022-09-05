@@ -22,4 +22,6 @@ def Fixed_interpolation(Q, inN):
         b[inN * i : inN * (i + 1)] = np.min(Q[inN * i : inN * (i + 1)])
     if n * inN != Q.shape[0]:
         b[n * inN :] = np.min(Q[n * inN :])
+    mask = b > Q
+    b[mask] = Q[mask]
     return b

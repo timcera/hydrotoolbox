@@ -12,10 +12,11 @@ def Eckhardt(Q, b_LH, a, BFImax, return_exceed=False):
     """
     b = np.zeros(Q.shape[0] + 1) if return_exceed else np.zeros(Q.shape[0])
     b[0] = b_LH[0]
+    first_c = (1 - BFImax) * a
+    second_c = (1 - a) * BFImax
+    third_c = 1 - a * BFImax
     for i in range(Q.shape[0] - 1):
-        b[i + 1] = ((1 - BFImax) * a * b[i] + (1 - a) * BFImax * Q[i + 1]) / (
-            1 - a * BFImax
-        )
+        b[i + 1] = (first_c * b[i] + second_c * Q[i + 1]) / (third_c)
         if b[i + 1] > Q[i + 1]:
             b[i + 1] = Q[i + 1]
             if return_exceed:

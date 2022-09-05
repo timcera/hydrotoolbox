@@ -12,8 +12,10 @@ def Furey(Q, b_LH, a, A, return_exceed=False):
     """
     b = np.zeros(Q.shape[0] + 1) if return_exceed else np.zeros(Q.shape[0])
     b[0] = b_LH[0]
+    first_c = a - A * (1 - a)
+    second_c = A * (1 - a)
     for i in range(Q.shape[0] - 1):
-        b[i + 1] = (a - A * (1 - a)) * b[i] + A * (1 - a) * Q[i]
+        b[i + 1] = first_c * b[i] + second_c * Q[i]
         if b[i + 1] > Q[i + 1]:
             b[i + 1] = Q[i + 1]
             if return_exceed:

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
-from tstoolbox import tsutils
+from toolbox_utils import tsutils
 
 
 class Indices:

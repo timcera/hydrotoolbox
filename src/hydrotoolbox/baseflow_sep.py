@@ -8,12 +8,13 @@ hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
-
+import logging
 import warnings
 
 import numpy as np
 import pandas as pd
-from tstoolbox import tsutils
+import typic
+from toolbox_utils import tsutils
 
 from .baseflow.comparison import strict_baseflow
 from .baseflow.separation import separation
@@ -21,24 +22,67 @@ from .baseflow.separation import separation
 warnings.filterwarnings("ignore")
 
 
-def bfsep(Q, method, print_input, bfi=False, date=None, area=None, ice_period=None):
-    ntsd = pd.DataFrame()
+def bfsep(
+    Q,
+    method,
+    print_input,
+    bfi=False,
+    date=None,
+    area=None,
+    ice_period=None,
+    k=None,
+    C=None,
+    a=None,
+):
+    complete_index = pd.date_range(start=Q.index[0], end=Q.index[-1], freq="D")
+    Q = Q.reindex(complete_index, fill_value=np.nan)
     if print_input is True:
         ntsd = Q.copy()
     Qb = pd.DataFrame()
     for col in Q.columns:
+        ncol = Q[col].astype("float64")
+        negmask = ncol <= 0
+        if negmask.any():
+            logging.warning(
+                tsutils.error_wrapper(
+                    f"""{negmask.sum()} negative or 0 values in input data.  No
+                baseflow separation technique works with negative values.
+                Negative values dropped from the analysis. This means that
+                positive values on either side of negative flows are considered
+                adjacent. Negative flow in the output baseflow represented
+                as missing."""
+                )
+            )
+        missingmask = ncol.isnull()
+        if missingmask.any():
+            logging.warning(
+                tsutils.error_wrapper(
+                    f"""{missingmask.sum()} missing values in input data.  No
+                baseflow separation technique works with missing values.
+                Missing values dropped from the analysis. This means that
+                positive values on either side of missing flows are considered
+                adjacent. Missing flow in the output baseflow represented
+                as missing."""
+                )
+            )
+        ncol[negmask] = pd.NA
+        ncol = ncol.dropna()
         ndf = pd.DataFrame(
             separation(
-                Q.loc[:, col].astype("float64").values,
+                ncol.values,
                 date=date,
                 area=area,
                 ice_period=ice_period,
                 method=method,
+                k=k,
+                C=C,
+                a=a,
             )[bfi],
-            index=Q.index,
+            index=ncol.index,
         )
         ndf.columns = [col]
         Qb = Qb.join(ndf, how="outer")
+    Qb = Qb.reindex(Q.index)
     return tsutils.return_input(print_input, ntsd, Qb, suffix=method.lower())
 
 
@@ -100,7 +144,7 @@ def boughton(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Boughton", print_input)
+    return bfsep(Q, "boughton", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -155,7 +199,7 @@ def chapman(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Chapman", print_input)
+    return bfsep(Q, "chapman", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -216,7 +260,7 @@ def cm(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "CM", print_input)
+    return bfsep(Q, "cm", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -271,7 +315,7 @@ def eckhardt(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Eckhardt", print_input)
+    return bfsep(Q, "eckhardt", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -326,7 +370,7 @@ def ewma(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "EWMA", print_input)
+    return bfsep(Q, "ewma", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -389,7 +433,7 @@ def usgs_hysep_fixed(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Fixed", print_input, area=area)
+    return bfsep(Q, "fixed", print_input, area=area)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -444,7 +488,7 @@ def furey(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Furey", print_input)
+    return bfsep(Q, "furey", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -499,7 +543,7 @@ def lh(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "LH", print_input)
+    return bfsep(Q, "lh", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -557,14 +601,15 @@ def usgs_hysep_local(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Local", print_input, area=area)
+    return bfsep(Q, "local", print_input, area=area)
 
 
+@typic.al
 @tsutils.doc(tsutils.docstrings)
 def ihacres(
-    k,
-    C,
-    a,
+    k: float,
+    C: float,
+    a: float,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -624,18 +669,7 @@ def ihacres(
         source_units=source_units,
         target_units=target_units,
     )
-    ntsd = pd.DataFrame()
-    if print_input is True:
-        ntsd = Q.copy()
-
-    Qb = Q.copy()
-    for col in range(len(Q.columns)):
-        for row in range(1, len(Q.index)):
-            Qb.iloc[row, col] = k / (1 + C) * Qb.iloc[row - 1, col] + C / (1 + C) * (
-                Q.iloc[row, col] + a * Q.iloc[row - 1, col]
-            )
-    Qb.mask(Qb < Q, other=Q, inplace=True)
-    return tsutils.return_input(print_input, ntsd, Qb, suffix="ihacres")
+    return bfsep(Q, "ihacres", print_input, k=k, C=C, a=a)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -704,7 +738,7 @@ def usgs_hysep_slide(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Slide", print_input, area=area)
+    return bfsep(Q, "slide", print_input, area=area)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -759,7 +793,7 @@ def ukih(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "UKIH", print_input)
+    return bfsep(Q, "ukih", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -814,7 +848,7 @@ def willems(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "Willems", print_input)
+    return bfsep(Q, "willems", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -869,25 +903,7 @@ def five_day(
         source_units=source_units,
         target_units=target_units,
     )
-    ntsd = pd.DataFrame()
-    if print_input is True:
-        ntsd = Q.copy()
-    ndf = pd.DataFrame()
-    for col in Q:
-        vals = Q[col].groupby(pd.Grouper(freq="5D")).min().astype("float64")
-        srccol = 0.9 * vals
-        prevrow = vals.shift(-1)
-        nextrow = vals.shift(1)
-        mask = (srccol > prevrow) | (srccol > nextrow)
-        nanmask = Q[col] == np.nan
-        vals.loc[mask] = None
-        vals = vals.interpolate(method="linear")
-        vals.loc[nanmask] = None
-        vals = vals.reindex(Q.index).ffill()
-        ltmask = Q[col] < vals
-        vals.loc[ltmask] = Q.loc[ltmask, col]
-        ndf = ndf.join(vals, how="outer")
-    return tsutils.return_input(print_input, ntsd, ndf, suffix="five_day")
+    return bfsep(Q, "five_day", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -941,20 +957,4 @@ def strict(
         source_units=source_units,
         target_units=target_units,
     )
-    ntsd = pd.DataFrame()
-    if print_input is True:
-        ntsd = Q.copy()
-    Qb = pd.DataFrame()
-    for col in Q.columns:
-        nstrict = strict_baseflow(Q[col].astype("float64").values)
-        vals = (
-            pd.DataFrame(
-                Q.loc[nstrict, col].astype("float64").values, index=Q.index[nstrict]
-            )
-            .reindex(Q.index)
-            .interpolate(method="time", axis="index")
-        )
-        Qb = Qb.join(vals, how="outer")
-    Qb.columns = Q.columns
-    Qb.mask(Qb < Q, other=Q, inplace=True)
-    return tsutils.return_input(print_input, ntsd, Qb, suffix="strict")
+    return bfsep(Q, "strict", print_input)

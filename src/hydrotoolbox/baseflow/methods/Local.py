@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+
+from typing import Optional
+
 import numpy as np
+import typic
 
 from .UKIH import linear_interpolation
 
@@ -18,7 +22,8 @@ def Local(Q, b_LH, area=None, return_exceed=False):
     return b
 
 
-def hysep_interval(area):
+@typic.al
+def hysep_interval(area: Optional[float] = None) -> int:
     # The duration of surface runoff is calculated from the empirical relation:
     # N=A^0.2, (1) where N is the number of days after which surface runoff ceases,
     # and A is the drainage area in square miles (Linsley and others, 1982, p. 210).
