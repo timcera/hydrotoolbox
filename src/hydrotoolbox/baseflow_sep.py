@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tools for hydrology.
 
-hydrotoolbox baseflow_sep --area 59.1 --area_units 'mile**2' linear < daily.csv
+hydrotoolbox baseflow_sep --area 59.1 linear < daily.csv
 hydrotoolbox baseflow_sep sliding < daily.csv
 hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
 ...
@@ -21,6 +21,22 @@ from .baseflow.separation import separation
 
 warnings.filterwarnings("ignore")
 
+tsutils.docstrings[
+    "area"
+] = """area: float
+        [optional, default is None, where N is then set to 5 days]
+
+        Basin area in km^2.
+
+        The area is used to estimate N days using the following equation:
+
+        .. math::
+            N = {0.38610216 * A}^{0.2}
+
+        The equation in the HYSEP report expects the area in square miles, but
+        the equation above used in hydrotoolbox is for square kilometers.
+"""
+
 
 def bfsep(
     Q,
@@ -36,6 +52,7 @@ def bfsep(
 ):
     complete_index = pd.date_range(start=Q.index[0], end=Q.index[-1], freq="D")
     Q = Q.reindex(complete_index, fill_value=np.nan)
+    ntsd = pd.DataFrame()
     if print_input is True:
         ntsd = Q.copy()
     Qb = pd.DataFrame()
@@ -399,8 +416,7 @@ def usgs_hysep_fixed(
 
     Parameters
     ----------
-    area: float
-        basin area in mile^2
+    ${area}
     input_ts
         Streamflow
     ${columns}
@@ -567,8 +583,7 @@ def usgs_hysep_local(
 
     Parameters
     ----------
-    area: float
-        basin area in mile^2
+    ${area}
     input_ts
         Streamflow
     ${columns}
@@ -704,8 +719,7 @@ def usgs_hysep_slide(
 
     Parameters
     ----------
-    area: float
-        Area of watershed in miles**2
+    ${area}
     input_ts
         Streamflow
     ${columns}
