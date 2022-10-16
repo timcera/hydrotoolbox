@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 from typing import Optional
 
 import numpy as np
-import typic
+from pydantic import validate_arguments
 
 from .UKIH import linear_interpolation
 
@@ -22,7 +20,7 @@ def Local(Q, b_LH, area=None, return_exceed=False):
     return b
 
 
-@typic.al
+@validate_arguments
 def hysep_interval(area: Optional[float] = None) -> int:
     # The duration of surface runoff is calculated from the empirical relation:
     # N=A^0.2, (1) where N is the number of days after which surface runoff ceases,

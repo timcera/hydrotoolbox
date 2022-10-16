@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tools for hydrology.
 
 hydrotoolbox baseflow --area 59.1 --area_units 'mile**2' linear < daily.csv
@@ -17,9 +16,9 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-import typic
 from cltoolbox import Program
 from cltoolbox.rst_text_formatter import RSTHelpFormatter
+from pydantic import validate_arguments
 from scipy.ndimage import generic_filter, minimum_filter1d
 from scipy.signal import find_peaks, lfilter
 from scipy.stats import linregress
@@ -814,7 +813,7 @@ def _flow_duration_cli(
 
     Parameters
     ----------
-    input_ts
+    ${input_ts}
         Streamflow
     exceedance_probabilities
         [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
@@ -1954,7 +1953,7 @@ def _exceedance_time_cli(
     )
 
 
-@typic.al
+@validate_arguments
 def exceedance_time(
     *thresholds,
     input_ts="-",

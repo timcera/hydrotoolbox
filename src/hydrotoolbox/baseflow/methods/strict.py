@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tools for hydrology.
 
 hydrotoolbox baseflow_sep --area 59.1 --area_units 'mile**2' linear < daily.csv

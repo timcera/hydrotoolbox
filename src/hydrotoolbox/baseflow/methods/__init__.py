@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from .Boughton import *
 from .Chapman import *
 from .CM import *

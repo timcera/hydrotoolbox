@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Tools for hydrology.
 
 hydrotoolbox baseflow_sep --area 59.1 linear < daily.csv
@@ -13,10 +12,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import typic
+from pydantic import validate_arguments
 from toolbox_utils import tsutils
 
-from .baseflow.comparison import strict_baseflow
 from .baseflow.separation import separation
 
 warnings.filterwarnings("ignore")
@@ -619,7 +617,7 @@ def usgs_hysep_local(
     return bfsep(Q, "local", print_input, area=area)
 
 
-@typic.al
+@validate_arguments
 @tsutils.doc(tsutils.docstrings)
 def ihacres(
     k: float,

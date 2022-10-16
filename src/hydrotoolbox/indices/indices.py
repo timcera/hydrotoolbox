@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
@@ -106,7 +105,7 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
         entire flow record (MA1) divided by the median (MA2) for the entire flow
         record.
         dimensionless—spatial"""
-        return self.data.mean() / self.MA2()
+        return self.MA1() / self.MA2()
 
     def _make_MA_6_8(high, low):
         def template(self):
