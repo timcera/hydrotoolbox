@@ -1,3 +1,13 @@
+## 2.0.0 (2022-10-16)
+
+### BREAKING CHANGE
+
+- move from typic to pydantic
+
+### Fix
+
+- update to pydantic toolbox_utils which is a breaking change
+
 ## 1.3.1 (2022-09-28)
 
 ## 1.3.0 (2022-09-05)
