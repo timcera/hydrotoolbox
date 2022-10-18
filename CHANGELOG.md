@@ -1,3 +1,9 @@
+## 2.0.1 (2022-10-18)
+
+### Fix
+
+- import Literal in python 3.7 by importing from typing_extensions
+
 ## 2.0.0 (2022-10-16)
 
 ### BREAKING CHANGE
