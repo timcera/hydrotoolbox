@@ -12,7 +12,6 @@ import os.path
 import re
 import sys
 import warnings
-from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -23,6 +22,7 @@ from scipy.ndimage import generic_filter, minimum_filter1d
 from scipy.signal import find_peaks, lfilter
 from scipy.stats import linregress
 from toolbox_utils import tsutils
+from typing_extensions import Literal
 
 from . import baseflow_sep
 from .baseflow.comparison import strict_baseflow
