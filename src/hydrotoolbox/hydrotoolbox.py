@@ -103,6 +103,7 @@ def _chapman_cli(
     tablefmt="csv",
 ):
     """Chapman filter (Chapman, 1991)
+    This is the best filter
 
     Parameters
     ----------
