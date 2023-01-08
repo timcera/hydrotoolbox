@@ -37,7 +37,7 @@ tsutils.docstrings[
 
 
 def bfsep(
-    Q,
+    flow,
     method,
     print_input,
     bfi=False,
@@ -48,24 +48,25 @@ def bfsep(
     C=None,
     a=None,
 ):
-    complete_index = pd.date_range(start=Q.index[0], end=Q.index[-1], freq="D")
-    Q = Q.reindex(complete_index, fill_value=np.nan)
+    complete_index = pd.date_range(start=flow.index[0], end=flow.index[-1], freq="D")
+    flow = flow.reindex(complete_index, fill_value=np.nan)
     ntsd = pd.DataFrame()
     if print_input is True:
-        ntsd = Q.copy()
-    Qb = pd.DataFrame()
-    for col in Q.columns:
-        ncol = Q[col].astype("float64")
+        ntsd = flow.copy()
+    q_base = pd.DataFrame()
+    for col in flow.columns:
+        ncol = flow[col].astype("float64")
         negmask = ncol <= 0
         if negmask.any():
             logging.warning(
                 tsutils.error_wrapper(
                     f"""{negmask.sum()} negative or 0 values in input data.  No
-                baseflow separation technique works with negative values.
-                Negative values dropped from the analysis. This means that
-                positive values on either side of negative flows are considered
-                adjacent. Negative flow in the output baseflow represented
-                as missing."""
+                    baseflow separation technique works with negative values.
+                    Negative values dropped from the analysis. This means that
+                    positive values on either side of negative flows are
+                    considered adjacent. Negative flow in the output baseflow
+                    represented as missing.
+                    """
                 )
             )
         missingmask = ncol.isnull()
@@ -73,11 +74,12 @@ def bfsep(
             logging.warning(
                 tsutils.error_wrapper(
                     f"""{missingmask.sum()} missing values in input data.  No
-                baseflow separation technique works with missing values.
-                Missing values dropped from the analysis. This means that
-                positive values on either side of missing flows are considered
-                adjacent. Missing flow in the output baseflow represented
-                as missing."""
+                    baseflow separation technique works with missing values.
+                    Missing values dropped from the analysis. This means that
+                    positive values on either side of missing flows are
+                    considered adjacent. Missing flow in the output baseflow
+                    represented as missing.
+                    """
                 )
             )
         ncol[negmask] = pd.NA
@@ -96,9 +98,9 @@ def bfsep(
             index=ncol.index,
         )
         ndf.columns = [col]
-        Qb = Qb.join(ndf, how="outer")
-    Qb = Qb.reindex(Q.index)
-    return tsutils.return_input(print_input, ntsd, Qb, suffix=method.lower())
+        q_base = q_base.join(ndf, how="outer")
+    q_base = q_base.reindex(flow.index)
+    return tsutils.return_input(print_input, ntsd, q_base, suffix=method.lower())
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -143,7 +145,7 @@ def boughton(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -159,7 +161,7 @@ def boughton(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "boughton", print_input)
+    return bfsep(flow, "boughton", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -198,7 +200,7 @@ def chapman(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -214,7 +216,7 @@ def chapman(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "chapman", print_input)
+    return bfsep(flow, "chapman", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -259,7 +261,7 @@ def cm(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -275,7 +277,7 @@ def cm(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "cm", print_input)
+    return bfsep(flow, "cm", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -314,7 +316,7 @@ def eckhardt(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -330,7 +332,7 @@ def eckhardt(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "eckhardt", print_input)
+    return bfsep(flow, "eckhardt", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -369,7 +371,7 @@ def ewma(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -385,7 +387,7 @@ def ewma(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "ewma", print_input)
+    return bfsep(flow, "ewma", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -431,7 +433,7 @@ def usgs_hysep_fixed(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -447,7 +449,7 @@ def usgs_hysep_fixed(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "fixed", print_input, area=area)
+    return bfsep(flow, "fixed", print_input, area=area)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -486,7 +488,7 @@ def furey(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -502,7 +504,7 @@ def furey(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "furey", print_input)
+    return bfsep(flow, "furey", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -541,7 +543,7 @@ def lh(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -557,7 +559,7 @@ def lh(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "lh", print_input)
+    return bfsep(flow, "lh", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -598,7 +600,7 @@ def usgs_hysep_local(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -614,7 +616,7 @@ def usgs_hysep_local(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "local", print_input, area=area)
+    return bfsep(flow, "local", print_input, area=area)
 
 
 @validate_arguments
@@ -666,7 +668,7 @@ def ihacres(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -682,7 +684,7 @@ def ihacres(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "ihacres", print_input, k=k, C=C, a=a)
+    return bfsep(flow, "ihacres", print_input, k=k, C=C, a=a)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -734,7 +736,7 @@ def usgs_hysep_slide(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -750,7 +752,7 @@ def usgs_hysep_slide(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "slide", print_input, area=area)
+    return bfsep(flow, "slide", print_input, area=area)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -789,7 +791,7 @@ def ukih(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -805,7 +807,7 @@ def ukih(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "ukih", print_input)
+    return bfsep(flow, "ukih", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -844,7 +846,7 @@ def willems(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -860,7 +862,7 @@ def willems(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "willems", print_input)
+    return bfsep(flow, "willems", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -899,7 +901,7 @@ def five_day(
     ${print_input}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -915,7 +917,7 @@ def five_day(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "five_day", print_input)
+    return bfsep(flow, "five_day", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -953,7 +955,7 @@ def strict(
     ${target_units}
     ${tablefmt}
     """
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -969,4 +971,4 @@ def strict(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(Q, "strict", print_input)
+    return bfsep(flow, "strict", print_input)

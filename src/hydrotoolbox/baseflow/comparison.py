@@ -2,10 +2,10 @@ import numpy as np
 
 
 def strict_baseflow(Q):
-    dQdt = (Q[2:] - Q[:-2]) / 2
+    delta_q = (Q[2:] - Q[:-2]) / 2
 
     # 1. Flow data associated with positive and zero values of dQ/dt.
-    wet1 = np.concatenate([[True], dQdt >= 0, [True]])
+    wet1 = np.concatenate([[True], delta_q >= 0, [True]])
 
     # 2. Previous 2 points before points with dQ/dt >= 0, as well as the next
     #    three points.
@@ -26,7 +26,7 @@ def strict_baseflow(Q):
     wet3[idx_after.clip(min=0, max=Q.shape[0] - 1)] = True
 
     # 4. Flow data followed by a data point with a larger value of -dQ/dt.
-    wet4 = np.concatenate([[True], dQdt[1:] - dQdt[:-1] < 0, [True, True]])
+    wet4 = np.concatenate([[True], delta_q[1:] - delta_q[:-1] < 0, [True, True]])
 
     return ~(wet1 + wet2 + wet3 + wet4)
 

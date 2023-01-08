@@ -18,15 +18,14 @@ import pandas as pd
 from cltoolbox import Program
 from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from pydantic import validate_arguments
-from scipy.ndimage import generic_filter, minimum_filter1d
-from scipy.signal import find_peaks, lfilter
-from scipy.stats import linregress
+from scipy.signal import find_peaks
 from toolbox_utils import tsutils
 from typing_extensions import Literal
 
 from . import baseflow_sep
 from .baseflow.comparison import strict_baseflow
 from .baseflow.param_estimate import recession_coefficient
+from .indices import indices as ind
 
 warnings.filterwarnings("ignore")
 
@@ -38,10 +37,12 @@ program.add_subprog("baseflow_sep")
 
 
 def atoi(text):
+    """Support for the natural_keys sorting function."""
     return int(text) if text.isdigit() else text
 
 
 def natural_keys(text):
+    """Sorting function for mixed alphanumeric labels in indices function."""
     return [atoi(c) for c in re.split(r"(\d+)", text)]
 
 
@@ -704,7 +705,7 @@ def recession(
     names=None,
     target_units=None,
 ):
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -721,8 +722,8 @@ def recession(
         target_units=target_units,
     )
     rc = {}
-    for col in Q.columns:
-        val = Q.loc[:, col].astype("float64").values
+    for col in flow.columns:
+        val = flow.loc[:, col].astype("float64").values
         strict = strict_baseflow(val)
         rc[col] = [recession_coefficient(val, strict, date, ice_period)]
     return rc
@@ -869,7 +870,8 @@ def flow_duration(
     names=None,
     target_units=None,
 ):
-    Q = tsutils.common_kwds(
+    """Calculate flow duration for different exceedance probabilities."""
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -886,7 +888,7 @@ def flow_duration(
         target_units=target_units,
     )
     exceedance_probabilities = np.array(exceedance_probabilities) / 100
-    ndf = Q.quantile((1 - exceedance_probabilities), axis="rows")
+    ndf = flow.quantile((1 - exceedance_probabilities), axis="rows")
     ndf.index = exceedance_probabilities
     ndf.index.name = "Quantiles"
     return ndf
@@ -989,7 +991,8 @@ def storm_events(
     names=None,
     target_units=None,
 ):
-    Q = tsutils.common_kwds(
+    """Find peak storm events."""
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -1006,18 +1009,18 @@ def storm_events(
         target_units=target_units,
     )
     if min_peak is None:
-        min_peak = Q.median()
+        min_peak = flow.median()
     peaks, _ = find_peaks(
-        Q.iloc[:, 0].astype("float64"), distance=window, height=min_peak
+        flow.iloc[:, 0].astype("float64"), distance=window, height=min_peak
     )
     collected = set()
-    for pk in peaks:
+    for peak in peaks:
         collected.update(
-            range(pk - int(float(rise_lag)), pk + int(float(fall_lag)) + 1)
+            range(peak - int(float(rise_lag)), peak + int(float(fall_lag)) + 1)
         )
     index = sorted(list(collected))
-    ndf = pd.DataFrame(Q.iloc[index, 0])
-    ndf.columns = Q.columns
+    ndf = pd.DataFrame(flow.iloc[index, 0])
+    ndf.columns = flow.columns
     return ndf
 
 
@@ -1511,10 +1514,10 @@ def indices(
     names=None,
     target_units=None,
 ):
-    from .indices import indices as ind
+    """Return the requested hydrologic indices."""
 
     indice_codes = list(indice_codes)
-    Q = tsutils.common_kwds(
+    flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
             skiprows=skiprows,
@@ -1531,7 +1534,7 @@ def indices(
         target_units=target_units,
     )
     indice_class = ind.Indices(
-        Q, water_year=water_year, use_median=use_median, drainage_area=drainage_area
+        flow, water_year=water_year, use_median=use_median, drainage_area=drainage_area
     )
 
     sclasses = [
@@ -1680,13 +1683,13 @@ def indices(
             flow_component = [None]
 
         class_codes = []
-        for sc in stream_classification:
-            for fc in flow_component:
-                if sc is not None:
-                    sc = sc.upper()
-                if fc is not None:
-                    fc = fc.upper()
-                class_codes.extend(lu[(sc, fc)])
+        for stream_class in stream_classification:
+            for flowc in flow_component:
+                if stream_class is not None:
+                    stream_class = stream_class.upper()
+                if flowc is not None:
+                    flowc = flowc.upper()
+                class_codes.extend(lu[(stream_class, flowc)])
     else:
         class_codes = []
 
@@ -1945,7 +1948,7 @@ def _exceedance_time_cli(
         target_units=target_units,
         *thresholds,
     )
-    ans = [(key, value) for key, value in ans.items()]
+    ans = list(ans.items())
     tsutils.printiso(
         ans,
         float_format=".3f",
@@ -1972,6 +1975,7 @@ def exceedance_time(
     names=None,
     target_units=None,
 ):
+    """Calculates the exceedance time over thresholds."""
     series = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -2005,8 +2009,7 @@ def exceedance_time(
         delays = [delays]
     if delays == [0]:
         delays = [0] * len(thresholds)
-    else:
-        delays = delays
+
     delays = [i * punits for i in delays]
 
     if len(delays) != len(thresholds):
@@ -2039,13 +2042,13 @@ def exceedance_time(
                 first = False
                 continue
             delta = index - oindex
-            if ovalue == True and value == True:
+            if ovalue is True and value is True:
                 accum += delta
-            elif ovalue == False and value == True:
+            elif ovalue is False and value is True:
                 accum += (
                     (series[index] - flow) / (series[index] - series[oindex]) * delta
                 )
-            elif ovalue == True and value == False:
+            elif ovalue is True and value is False:
                 accum += (
                     (series[oindex] - flow) / (series[oindex] - series[index]) * delta
                 )
@@ -2065,7 +2068,7 @@ def about():
 
 
 def main():
-    """Set debug and run mando.main function."""
+    """Test for debug file."""
     if not os.path.exists("debug_hydrotoolbox"):
         sys.tracebacklimit = 0
     program()

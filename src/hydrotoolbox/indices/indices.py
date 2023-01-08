@@ -10,8 +10,9 @@ class Indices:
             raise ValueError(
                 tsutils.error_wrapper(
                     f"""
-Can only calculate indices on 1 series, you gave {len(data.columns)}.
-                                                       """
+                    Can only calculate indices on 1 series, you gave
+                    {len(data.columns)}.
+                    """
                 )
             )
 
@@ -51,9 +52,10 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
 
     def MA3(self):
         """MA3
-        Mean (or median) of the coefficients of variation (standard deviation/mean)
-        for each year.  Compute the coefficient of variation for each year of daily
-        flows. Compute the mean of the annual coefficients of variation.
+        Mean (or median) of the coefficients of variation (standard
+        deviation/mean) for each year.  Compute the coefficient of variation
+        for each year of daily flows. Compute the mean of the annual
+        coefficients of variation.
         percent—temporal"""
         tmpdata = (
             self.data.groupby(pd.Grouper(freq=self.water_year)).std().mean()
@@ -65,15 +67,17 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
 
     def MA4(self):
         """MA4
-        Standard deviation of the percentiles of the logs of the entire flow record
-        divided by the mean of percentiles of the logs.   Compute the log10 of the
-        daily flows for the entire record.  Compute the 5th, 10th, 15th, 20th,
-        25th, 30th, 35th, 40th, 45th, 50th, 55th, 60th, 65th, 70th, 75th, 80th,
-        85th, 90th, and 95th  percentiles for the logs of the entire flow record.
+        Standard deviation of the percentiles of the logs of the entire flow
+        record divided by the mean of percentiles of the logs.   Compute the
+        log10 of the daily flows for the entire record.  Compute the 5th, 10th,
+        15th, 20th, 25th, 30th, 35th, 40th, 45th, 50th, 55th, 60th, 65th, 70th,
+        75th, 80th, 85th, 90th, and 95th  percentiles for the logs of the
+        entire flow record.
 
-        Percentiles are computed by interpolating between the ordered (ascending)
-        logs of the flow values. Compute the standard    deviation and mean for the
-        percentile values. Divide the standard deviation by the mean.
+        Percentiles are computed by interpolating between the ordered
+        (ascending) logs of the flow values. Compute the standard    deviation
+        and mean for the percentile values. Divide the standard deviation by
+        the mean.
         percent–spatial"""
         p = [
             0.05,
@@ -102,8 +106,8 @@ Can only calculate indices on 1 series, you gave {len(data.columns)}.
     def MA5(self):
         """MA5
         The skewness of the entire flow record is computed as the mean for the
-        entire flow record (MA1) divided by the median (MA2) for the entire flow
-        record.
+        entire flow record (MA1) divided by the median (MA2) for the entire
+        flow record.
         dimensionless—spatial"""
         return self.MA1() / self.MA2()
 

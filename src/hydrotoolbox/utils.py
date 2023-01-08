@@ -1,3 +1,5 @@
+"""Utilities for other functions in hydrotoolbox."""
+
 import math
 
 from pint import UnitRegistry
@@ -14,12 +16,12 @@ def nstar(area=None, area_unit="mile**2"):
     used for hydrograph separations is the odd integer between 3 and 11 nearest
     to 2N (Pettyjohn and Henning, 1979, p. 31)."""
     if area is None:
-        n = 5
+        numdays = 5
     else:
         area = area * ureg(area_unit)
         area = area.to("miles**2").magnitude
-        n = area**0.2
-    inn = math.ceil(2 * n)
+        numdays = area**0.2
+    inn = math.ceil(2 * numdays)
     if (inn % 2) == 0:
         inn = inn - 1
     inn = int(min(max(inn, 3), 11))

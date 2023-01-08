@@ -36,17 +36,12 @@ or numpy (http://numpy.scipy.org) for any heavy lifting.
 
 Requirements
 ------------
-* pandas - on Windows this is part scientific Python distributions like
-  Python(x,y), Anaconda, or Enthought.
-
-* mando - command line parser
+* python 3.7 or higher
 
 Installation
 ------------
 Should be as easy as running ``pip install hydrotoolbox``
-at any command line.  Not sure on Windows whether this will bring
-in pandas, but as mentioned above, if you start with scientific Python
-distribution then you shouldn't have a problem.
+at any command line.
 
 Usage - Command Line
 --------------------

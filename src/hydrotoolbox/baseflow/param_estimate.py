@@ -23,8 +23,8 @@ def recession_coefficient(Q, strict, date=None, ice_period=None):
             )
     dry = strict[~idx_ice]
 
-    cQ, dQ = Q[1:-1], (Q[2:] - Q[:-2]) / 2
-    cQ, dQ = cQ[dry[1:-1]], dQ[dry[1:-1]]
+    cQ = Q[1:-1][dry[1:-1]]
+    dQ = ((Q[2:] - Q[:-2]) / 2)[dry[1:-1]]
 
     idx = np.argsort(-dQ / cQ)[np.floor(dQ.shape[0] * 0.05).astype(int)]
     K = -cQ[idx] / dQ[idx]
@@ -39,22 +39,22 @@ def param_calibrate(param_range, method, Q, b_LH):
 
 
 def param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth):
-    logQ = np.log(Q + 1)
+    log_q = np.log(Q + 1)
     loss = np.zeros(param_range.shape)
     for i in range(param_range.shape[0]):
         p = param_range[i]
         b_exceed = method(Q, b_LH, p, return_exceed=True)
         f_exd, logb = b_exceed[-1] / Q.shape[0], np.log(b_exceed[:-1] + 1)
-        NSE_rec = NSE(logQ[idx_rec], logb[idx_rec])
-        NSE_oth = NSE(logQ[idx_oth], logb[idx_oth])
+        NSE_rec = NSE(log_q[idx_rec], logb[idx_rec])
+        NSE_oth = NSE(log_q[idx_oth], logb[idx_oth])
         loss[i] = 1 - (1 - (1 - NSE_rec) / (1 - NSE_oth)) * (1 - f_exd)
     return param_range[np.argmin(loss)]
 
 
 def recession_period(Q):
     idx_dec = np.zeros(Q.shape[0] - 1, dtype=np.int64)
-    Q_ave = moving_average(Q, 3)
-    idx_dec[1:-1] = (Q_ave[:-1] - Q_ave[1:]) > 0
+    q_ave = moving_average(Q, 3)
+    idx_dec[1:-1] = (q_ave[:-1] - q_ave[1:]) > 0
     idx_beg = np.where(idx_dec[:-1] - idx_dec[1:] == -1)[0] + 1
     idx_end = np.where(idx_dec[:-1] - idx_dec[1:] == 1)[0] + 1
     idx_keep = (idx_end - idx_beg) >= 10
@@ -71,17 +71,17 @@ def maxmium_BFI(Q, b_LH, a, date=None):
     if date is None:
         idx_end = b.shape[0] // 365 * 365
         annual_b = np.mean(b[:idx_end].reshape(-1, 365), axis=1)
-        annual_Q = np.mean(Q[:idx_end].reshape(-1, 365), axis=1)
+        annual_q = np.mean(Q[:idx_end].reshape(-1, 365), axis=1)
     else:
         idx_year = date.Y - date.Y.min()
         counts = np.bincount(idx_year)
         idx_valid = counts > 0
         annual_b = np.bincount(idx_year, weights=b)[idx_valid] / counts[idx_valid]
-        annual_Q = np.bincount(idx_year, weights=Q)[idx_valid] / counts[idx_valid]
-    annual_BFI = annual_b / annual_Q
-    BFI_max = np.max(annual_BFI)
-    BFI_max = BFI_max if BFI_max < 0.9 else np.sum(annual_b) / np.sum(annual_Q)
-    return BFI_max
+        annual_q = np.bincount(idx_year, weights=Q)[idx_valid] / counts[idx_valid]
+    annual_bfi = annual_b / annual_q
+    bfi_max = np.max(annual_bfi)
+    bfi_max = bfi_max if bfi_max < 0.9 else np.sum(annual_b) / np.sum(annual_q)
+    return bfi_max
 
 
 def Backward(Q, b_LH, a):

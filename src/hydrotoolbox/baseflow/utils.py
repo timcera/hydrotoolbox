@@ -88,7 +88,7 @@ def multi_arange(starts, stops):
     return res
 
 
-def NSE(Q_obs, Q_sim):
-    SS_res = np.sum(np.square(Q_obs - Q_sim))
-    SS_tot = np.sum(np.square(Q_obs - np.mean(Q_obs)))
-    return (1 - SS_res / (SS_tot + 1e-10)) - 1e-10
+def NSE(q_obs, q_sim):
+    ss_res = np.sum(np.square(q_obs - q_sim))
+    ss_tot = np.sum(np.square(q_obs - np.mean(q_obs)))
+    return (1 - ss_res / (ss_tot + 1e-10)) - 1e-10
