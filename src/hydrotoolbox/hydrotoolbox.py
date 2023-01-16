@@ -815,7 +815,6 @@ def _flow_duration_cli(
     Parameters
     ----------
     ${input_ts}
-        Streamflow
     exceedance_probabilities
         [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
 

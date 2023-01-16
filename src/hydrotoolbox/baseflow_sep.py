@@ -100,6 +100,7 @@ def bfsep(
         ndf.columns = [col]
         q_base = q_base.join(ndf, how="outer")
     q_base = q_base.reindex(flow.index)
+    q_base.index.name = "Datetime"
     return tsutils.return_input(print_input, ntsd, q_base, suffix=method.lower())
 
 
