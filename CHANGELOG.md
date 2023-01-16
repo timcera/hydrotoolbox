@@ -1,3 +1,9 @@
+## 2.0.4 (2023-01-16)
+
+### Fix
+
+- forgot cltoolbox dependency
+
 ## 2.0.3 (2023-01-16)
 
 ### Refactor
