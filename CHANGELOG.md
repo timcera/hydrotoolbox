@@ -1,3 +1,9 @@
+## 2.0.3 (2023-01-16)
+
+### Refactor
+
+- refactored code using refurb and pylint
+
 ## 2.0.2 (2023-01-08)
 
 ## 2.0.1 (2022-10-18)
