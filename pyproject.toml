@@ -14,6 +14,7 @@ readme = "README.rst"
 description = "Command line script and Python library for analysis of flow time-series."
 requires-python = ">=3.7.1"
 dependencies = [
+    "cltoolbox >= 1.0.0",
     "toolbox_utils >= 1.0.0, < 2.0.0",
     "pydantic",
     ]
