@@ -1,6 +1,7 @@
 [build-system]
 requires = [
-    "setuptools",
+    "setuptools>=45",
+    "setuptools_scm[toml]>=6.2",
     "wheel",
     "oldest-supported-numpy",
 ]
@@ -14,8 +15,6 @@ description = "Command line script and Python library for analysis of flow time-
 requires-python = ">=3.7.1"
 dependencies = [
     "toolbox_utils >= 1.0.0, < 2.0.0",
-    "setuptools",
-    "setuptools_scm",
     "pydantic",
     ]
 license = {text = "BSD-3-Clause"}
@@ -90,6 +89,9 @@ tag_format = "$version"
 version_files = ["VERSION"]
 update_changelog_on_bump = true
 
+[tool.isort]
+profile = "black"
+
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
 include-package-data = true
@@ -102,5 +104,4 @@ version = {file = "VERSION"}
 where = ["src"]
 exclude = ["examples*", "tools*", "docs*", "hydrotoolbox.tests*"]
 
-[tool.isort]
-profile = "black"
+[tool.setuptools_scm]
