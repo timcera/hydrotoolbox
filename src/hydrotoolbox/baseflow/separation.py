@@ -69,7 +69,6 @@ def separation(
             b[m] = Furey(Q, b_lh, a, A)
 
         if m == "eckhardt":
-            # bfi_max = maxmium_BFI(Q, b_lh, a, date)
             bfi_max = param_calibrate(
                 np.arange(0.0001, 1, 0.0001), f_Eckhardt(a), Q, b_lh
             )
