@@ -2,11 +2,13 @@ import subprocess
 from io import StringIO
 
 import pandas as pd
-import pytest
 from pandas.testing import assert_frame_equal
-from toolbox_utils import tsutils
 
 from hydrotoolbox import hydrotoolbox
+
+# This stupid thing is needed to that linters don't remove the hydrotoolbox
+# import.
+ht = hydrotoolbox
 
 
 def pytest_generate_tests(metafunc):
