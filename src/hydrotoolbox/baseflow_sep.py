@@ -644,13 +644,13 @@ def ihacres(
 
     Parameters
     ----------
-    k: float
+    k : float
         k
         coefficient
-    C: float
+    C : float
         C
         coefficient
-    a: float
+    a : float
         a
         coefficient
     input_ts

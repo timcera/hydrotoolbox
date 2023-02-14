@@ -12,6 +12,7 @@ import os.path
 import re
 import sys
 import warnings
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -20,7 +21,6 @@ from cltoolbox.rst_text_formatter import RSTHelpFormatter
 from pydantic import validate_arguments
 from scipy.signal import find_peaks
 from toolbox_utils import tsutils
-from typing_extensions import Literal
 
 from . import baseflow_sep
 from .baseflow.comparison import strict_baseflow
@@ -32,7 +32,6 @@ warnings.filterwarnings("ignore")
 program = Program("hydrotoolbox", "0.0")
 
 program.add_subprog("baseflow_sep")
-
 
 
 def atoi(text):
@@ -814,21 +813,34 @@ def _flow_duration_cli(
     Parameters
     ----------
     ${input_ts}
+
     exceedance_probabilities
         [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
 
         Exceedance probabilities
+
     ${columns}
+
     ${source_units}
+
     ${start_date}
+
     ${end_date}
+
     ${dropna}
+
     ${clean}
+
     ${round_index}
+
     ${skiprows}
+
     ${index_type}
+
     ${names}
+
     ${target_units}
+
     ${tablefmt}
     """
     tsutils.printiso(
@@ -917,34 +929,50 @@ def _storm_events_cli(
 
     Parameters
     ----------
-    rise_lag: int
+    rise_lag : int
         Sets the number of time-series terms to include from the rising limb of
         the hydrograph.
-    fall_lag: int
+
+    fall_lag : int
         Sets the number of time-series terms to include from the falling limb of
         the hydrograph. window=1
-    min_peak: int, float
+
+    min_peak : int, float
         [optional, default=0]
 
         All detected storm peaks in the hydrograph must be greater than
         `min_peak`.
-    window: int
+
+    window : int
         [optional, default=1]
 
         Adjacent peaks can not be within `window` time-series terms of each
         other.
+
     ${input_ts}
+
     ${columns}
+
     ${source_units}
+
     ${start_date}
+
     ${end_date}
+
     ${dropna}
+
     ${clean}
+
     ${round_index}
+
     ${skiprows}
+
     ${index_type}
+
     ${names}
+
     ${target_units}
+
     ${tablefmt}
     """
     tsutils.printiso(
@@ -1433,34 +1461,51 @@ def _indices_cli(
 
         The hydrologic indice codes are taken as is, but the collected stream
         classifications are intersected with the flow regime indices.
+
     water_year
         [optional, default="A-SEP"]
 
         The water year to use for the calculation.  This uses the one of the
         "A-..." Pandas offset codes.  The "A-SEP" code represents the very end of
         September (the start of October) as the end of the water year.
-    use_median: bool
+
+    use_median : bool
         [optional, default=False]
 
         If True, use the median instead of the mean for the calculations.
+
     drainage_area
         [optional, default=1]
 
         The drainage area to use for the calculations.  This is the drainage
         area in square miles.
+
     ${input_ts}
+
     ${columns}
+
     ${source_units}
+
     ${start_date}
+
     ${end_date}
+
     ${dropna}
+
     ${clean}
+
     ${round_index}
+
     ${skiprows}
+
     ${index_type}
+
     ${names}
+
     ${target_units}
+
     ${print_input}
+
     ${tablefmt}
     """
     tsutils.printiso(
@@ -1897,35 +1942,51 @@ def _exceedance_time_cli(
 
     Parameters
     ----------
-    thresholds: list
+    *thresholds : list
         List of thresholds to calculate exceedance for.
+
     ${input_ts}
-    delays: list
+
+    delays : list
         [optional, default 0]
 
         List of delays to calculate exceedance for.  This can be an empty list
         in which case the delays are all 0.  If one delay is given, then each
         flow requires a delay term.
-    under_over: str
+
+    under_over : str
         [optional, default "over"]
 
         Whether to calculate exceedance or under-exceedance.
-    time_units: str
+
+    time_units : str
         [optional, default "day"]
 
         Units for the delays and the returned exceedance time.  Can be any
         of the following strings: "year", "month", "day", "hour", "min", or "sec".
+
     ${columns}
+
     ${source_units}
+
     ${start_date}
+
     ${end_date}
+
     ${dropna}
+
     ${clean}
+
     ${round_index}
+
     ${skiprows}
+
     ${index_type}
+
     ${names}
+
     ${target_units}
+
     ${print_input}
     """
     ans = exceedance_time(

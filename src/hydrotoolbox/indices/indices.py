@@ -925,7 +925,6 @@ dimensionless—spatial"""
 
     def _make_MH_24_26(med_mult=1, quantile=None):
         def template(self):
-
             if quantile is not None:
                 medm = self.data.quantile(quantile)
             else:
