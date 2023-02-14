@@ -1,27 +1,25 @@
 [build-system]
+build-backend = "setuptools.build_meta"
 requires = [
     "setuptools>=45",
     "setuptools_scm[toml]>=6.2",
     "wheel",
-    "oldest-supported-numpy",
+    "oldest-supported-numpy"
 ]
-build-backend = "setuptools.build_meta"
 
 [project]
 name = "hydrotoolbox"
 dynamic = ["version"]
 readme = "README.rst"
 description = "Command line script and Python library for analysis of flow time-series."
-requires-python = ">=3.7.1"
 dependencies = [
     "cltoolbox >= 1.0.0",
-    "toolbox_utils >= 2.0.0, < 3.0.0",
-    "pydantic",
-    ]
-license = {text = "BSD-3-Clause"}
+    "toolbox_utils >= 3.0.0, < 4.0.0",
+    "pydantic"
+]
 authors = [
     {name = "Tim Cera", email = "tim@cerazone.net"}
-    ]
+]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
@@ -38,34 +36,46 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
-keywords = ["time-series",
-            "cli-app",
-            "hydrology",
-            "baseflow",
-            "hydrograph-recession",
-            "hydrographic",
-            ]
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+keywords = [
+    "time-series",
+    "cli-app",
+    "hydrology",
+    "baseflow",
+    "hydrograph-recession",
+    "hydrographic"
+]
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.8"
 
 [project.optional-dependencies]
 dev = [
+    "bandit",
     "black",
+    "blacken-docs",
+    "black-nbconvert",
     "cleanpy",
-    "twine",
+    "commitizen",
+    "coverage[toml]",
+    "isort",
+    "mypy",
+    "pre-commit",
+    "pyflakes",
+    "pylama",
+    "pyle",
+    "pylint",
+    "pyre",
+    "pyroma",
     "pytest",
-    "coverage",
-    "flake8",
     "pytest-cov",
     "pytest-mpl",
-    "pre-commit",
-    "black-nbconvert",
-    "blacken-docs",
-    "velin",
-    "isort",
     "pyupgrade",
-    "commitizen",
-    ]
+    "twine",
+    "unimport",
+    "velin",
+    "vulture"
+]
 
 [project.scripts]
 hydrotoolbox = "hydrotoolbox.hydrotoolbox:main"
@@ -75,20 +85,20 @@ documentation = "https://timcera.bitbucket.io/hydrotoolbox/docs/index.html#hydro
 github = "https://github.com/timcera/hydrotoolbox"
 bitbucket = "https://bitbucket.org/timcera/hydrotoolbox/src/main/"
 
-[tool]
-
 [tool.check-manifest]
-ignore = ["docs/_function_autosummary/*",
-          ".coverage",
-          ".deepsource.toml",
-          ".ipynb_checkpoints/*"]
+ignore = [
+    "docs/_function_autosummary/*",
+    ".coverage",
+    ".deepsource.toml",
+    ".ipynb_checkpoints/*"
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "2.0.4"
-tag_format = "$version"
-version_files = ["VERSION"]
+tag_format = "v$version"
 update_changelog_on_bump = true
+version = "2.0.4"
+version_files = ["VERSION"]
 
 [tool.isort]
 profile = "black"
@@ -102,7 +112,7 @@ readme = {file = "README.rst"}
 version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
-where = ["src"]
 exclude = ["examples*", "tools*", "docs*", "hydrotoolbox.tests*"]
+where = ["src"]
 
 [tool.setuptools_scm]
