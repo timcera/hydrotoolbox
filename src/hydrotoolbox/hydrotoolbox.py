@@ -652,8 +652,7 @@ def _strict_cli(
 
     Parameters
     ----------
-    input_ts
-        Streamflow
+    ${input_ts}
     ${columns}
     ${source_units}
     ${start_date}
@@ -665,6 +664,7 @@ def _strict_cli(
     ${index_type}
     ${names}
     ${target_units}
+    ${print_input}
     ${tablefmt}
     """
     tsutils.printiso(
