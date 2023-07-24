@@ -40,8 +40,18 @@ Requirements
 
 Installation
 ------------
-Should be as easy as running ``pip install hydrotoolbox``
-at any command line.
+pip
+~~~
+.. code-block:: bash
+
+    pip install hydrotoolbox
+
+conda
+~~~~~
+.. code-block:: bash
+
+    conda install -c conda-forge hydrotoolbox
+
 
 Usage - Command Line
 --------------------
