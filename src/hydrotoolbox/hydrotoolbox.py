@@ -18,7 +18,11 @@ import numpy as np
 import pandas as pd
 from cltoolbox import Program
 from cltoolbox.rst_text_formatter import RSTHelpFormatter
-from pydantic import validate_arguments
+
+try:
+    from pydantic import validate_call
+except ImportError:
+    from pydantic import validate_arguments as validate_call
 from scipy.signal import find_peaks
 from toolbox_utils import tsutils
 
@@ -2015,7 +2019,7 @@ def _exceedance_time_cli(
     )
 
 
-@validate_arguments
+@validate_call
 def exceedance_time(
     *thresholds,
     input_ts="-",

@@ -12,7 +12,11 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from pydantic import validate_arguments
+
+try:
+    from pydantic import validate_call
+except ImportError:
+    from pydantic import validate_arguments as validate_call
 from toolbox_utils import tsutils
 
 from .baseflow.separation import separation
@@ -620,7 +624,7 @@ def usgs_hysep_local(
     return bfsep(flow, "local", print_input, area=area)
 
 
-@validate_arguments
+@validate_call
 @tsutils.doc(tsutils.docstrings)
 def ihacres(
     k: float,
