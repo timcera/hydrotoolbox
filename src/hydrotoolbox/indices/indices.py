@@ -1,7 +1,10 @@
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
-from toolbox_utils import tsutils
+
+from ..toolbox_utils.src.toolbox_utils import tsutils
 
 
 class Indices:
@@ -111,7 +114,7 @@ class Indices:
         dimensionless—spatial"""
         return self.MA1() / self.MA2()
 
-    def _make_MA_6_8(high, low):
+    def _make_MA_6_8(high: float, low: float):
         def template(self):
             return self.data.quantile(high) / self.data.quantile(low)
 
@@ -138,7 +141,7 @@ Range in daily flows is computed like MA6, except using the 25-percent and
 75-percent value.
 dimensionless—spatial"""
 
-    def _make_MA_9_11(high, low):
+    def _make_MA_9_11(high: float, low: float):
         def template(self):
             return (self.data.quantile(high) - self.data.quantile(low)) / self.MA2()
 
@@ -166,7 +169,7 @@ Spread in daily flows is computed like MA9, except using the 25th and 75th
 percentiles.
 dimensionless—spatial"""
 
-    def _make_MA_12_23(month):
+    def _make_MA_12_23(month: int):
         def template(self):
             if self.use_median is True:
                 return self.data[self.data.index.month == month].median()
@@ -275,7 +278,7 @@ entire flow record.
 MA23 is the mean of all December flow values over the entire record
 (cubic feet per second— temporal)."""
 
-    def _make_MA_24_35(month):
+    def _make_MA_24_35(month: int):
         def template(self):
             tmpdata = (
                 self.data.groupby(pd.Grouper(freq="M")).std()
@@ -419,7 +422,7 @@ percent—temporal"""
             max(self.data_monthly_mean) - min(self.data_monthly_mean)
         ) / self.data_monthly_mean.median()
 
-    def _make_MA_37_38(high, low):
+    def _make_MA_37_38(high: float, low: float):
         def template(self):
             return (
                 self.data_monthly_mean.quantile(high)
@@ -476,7 +479,7 @@ dimensionless—spatial"""
             max(self.data_yearly_mean) - min(self.data_yearly_mean)
         ) / self.data_yearly_mean.median()
 
-    def _make_MA_43_44(high, low):
+    def _make_MA_43_44(high: float, low: float):
         def template(self):
             return (
                 self.data_yearly_mean.quantile(high)
@@ -513,7 +516,7 @@ dimensionless-spatial"""
             self.data_yearly_mean.mean() - self.data_yearly_mean.median()
         ) / self.data_yearly_mean.median()
 
-    def _make_ML_1_12(month):
+    def _make_ML_1_12(month: int):
         def template(self):
             if self.use_median is True:
                 return self.data_monthly_min[
@@ -666,9 +669,7 @@ cubic feet per second—temporal"""
             self.data.rolling(7).mean().groupby(pd.Grouper(freq=self.water_year)).min()
             / self.data_yearly_mean
         )
-        if self.use_median is True:
-            return stat.median()
-        return stat.mean()
+        return stat.median() if self.use_median is True else stat.mean()
 
     def ML18(self):
         """ML18
@@ -721,12 +722,10 @@ cubic feet per second—temporal"""
         cubic feet per second/square mile—temporal"""
         return self.data_yearly_min.mean() / self.drainage_area
 
-    def _make_MH_1_12(month):
+    def _make_MH_1_12(month: int):
         def template(self):
             stat = self.data_monthly_max[self.data_monthly_max.index.month == month]
-            if self.use_median is True:
-                return stat.median()
-            return stat.mean()
+            return stat.median() if self.use_median is True else stat.mean()
 
         return template
 
@@ -844,7 +843,7 @@ second—temporal"""
         dimensionless—temporal"""
         return (self.data_yearly_max / self.data_yearly.median()).median()
 
-    def _MH_15_17(quant):
+    def _MH_15_17(quant: float):
         def template(self):
             return self.data.quantile(quant) / self.MA2()
 
@@ -899,7 +898,7 @@ dimensionless—spatial"""
             return self.data_yearly_max.median() / self.drainage_area
         return self.data_yearly_max.mean() / self.drainage_area
 
-    def _make_MH_21_23(med_mult):
+    def _make_MH_21_23(med_mult: int):
         def template(self):
             med = self.MA2()
             flow = self.data - (med_mult * med)
@@ -923,7 +922,7 @@ dimensionless—spatial"""
     MH22 = _make_MH_21_23(3)
     MH23 = _make_MH_21_23(7)
 
-    def _make_MH_24_26(med_mult=1, quantile=None):
+    def _make_MH_24_26(med_mult: int = 1, quantile: Optional[float] = None):
         def template(self):
             if quantile is not None:
                 medm = self.data.quantile(quantile)
@@ -940,9 +939,22 @@ dimensionless—spatial"""
     MH26 = _make_MH_24_26(med_mult=7)
     MH27 = _make_MH_24_26(quantile=0.75)
 
-    def _lf(self, thresh, than):
-        """Returns number of events, average duration of events, count of all
-        days."""
+    def event_statistics(self, thresh, than):
+        """Event statistics.
+
+        Parameters
+        ----------
+        thresh : float
+            Threshold value.
+        than : str
+            Comparison operator.
+
+        Returns
+        -------
+        Given threshold and comparison, returns number of matching events per
+        year, average duration of events, count of all matching days for each
+        year.
+        """
         nnp = {}
         lfdur = {}
         allnp = {}
@@ -969,55 +981,45 @@ dimensionless—spatial"""
 
     def FL1(self):
         thresh = self.data.quantile(0.25)
-        nnp, _, _ = self._lf(thresh, "<")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+        nnp, _, _ = self.event_statistics(thresh, "<")
+        return nnp.median() if self.use_median is True else nnp.mean()
 
     def FL2(self):
         thresh = self.data.quantile(0.25)
-        nnp, _, _ = self._lf(thresh, "<")
+        nnp, _, _ = self.event_statistics(thresh, "<")
         return nnp.std() / nnp.mean() * 100
 
     def FL3(self):
         thresh = self.data.mean() * 0.05
-        nnp, _, _ = self._lf(thresh, "<")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+        nnp, _, _ = self.event_statistics(thresh, "<")
+        return nnp.median() if self.use_median is True else nnp.mean()
 
     def FH1(self):
         thresh = self.data.quantile(0.75)
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+        nnp, _, _ = self.event_statistics(thresh, ">")
+        return nnp.median() if self.use_median is True else nnp.mean()
 
     def FH2(self):
         thresh = self.data.quantile(0.75)
-        nnp, _, _ = self._lf(thresh, ">")
+        nnp, _, _ = self.event_statistics(thresh, ">")
         return nnp.std() / nnp.mean() * 100
 
-    def _make_FH_3_4(med_mult):
+    def _make_FH_3_4(med_mult: int):
         def template(self):
             thresh = med_mult * self.MA2()
-            _, _, pdur = self._lf(thresh, ">")
-            if self.use_median is True:
-                return pdur.median()
-            return pdur.mean()
+            _, _, pdur = self.event_statistics(thresh, ">")
+            return pdur.median() if self.use_median is True else pdur.mean()
 
         return template
 
     FH3 = _make_FH_3_4(3)
     FH4 = _make_FH_3_4(7)
 
-    def _make_FH_5_7(med_mult):
+    def _make_FH_5_7(med_mult: int):
         def template(self):
             thresh = self.MA2() * med_mult
-            nnp, _, _ = self._lf(thresh, ">")
-            if self.use_median is True:
-                return nnp.median()
-            return nnp.mean()
+            nnp, _, _ = self.event_statistics(thresh, ">")
+            return nnp.median() if self.use_median is True else nnp.mean()
 
         return template
 
@@ -1025,13 +1027,11 @@ dimensionless—spatial"""
     FH6 = _make_FH_5_7(3)
     FH7 = _make_FH_5_7(7)
 
-    def _make_FH_8_9(quant):
+    def _make_FH_8_9(quant: float):
         def template(self):
             thresh = self.data.quantile(quant)
-            nnp, _, _ = self._lf(thresh, ">")
-            if self.use_median is True:
-                return nnp.median()
-            return nnp.mean()
+            nnp, _, _ = self.event_statistics(thresh, ">")
+            return nnp.median() if self.use_median is True else nnp.mean()
 
         return template
 
@@ -1040,20 +1040,16 @@ dimensionless—spatial"""
 
     def FH10(self):
         thresh = self.data_yearly.min().median()
-        nnp, _, _ = self._lf(thresh, ">")
-        if self.use_median is True:
-            return nnp.median()
-        return nnp.mean()
+        nnp, _, _ = self.event_statistics(thresh, ">")
+        return nnp.median() if self.use_median is True else nnp.mean()
 
     def DL1(self):
         stat = self.data_yearly.min()
-        if self.use_median is True:
-            return stat.median()
-        return stat.mean()
+        return stat.median() if self.use_median is True else stat.mean()
 
     def _preroll(self, days, stattype):
         stats = []
-        for group_name, vals in self.data_yearly:
+        for _, vals in self.data_yearly:
             rmean = vals.rolling(days).mean()
             if stattype == "min":
                 stats.append(rmean.min())
@@ -1063,11 +1059,9 @@ dimensionless—spatial"""
 
     def _roll(self, days, stattype):
         stat = self._preroll(days, stattype)
-        if self.use_median is True:
-            return stat.median()
-        return stat.mean()
+        return stat.median() if self.use_median is True else stat.mean()
 
-    def _make_DL_2_5_DH_2_5(days, stat):
+    def _make_DL_2_5_DH_2_5(days: int, stat):
         def template(self):
             return self._roll(days, stat)
 
@@ -1078,7 +1072,7 @@ dimensionless—spatial"""
     DL4 = _make_DL_2_5_DH_2_5(30, "min")
     DL5 = _make_DL_2_5_DH_2_5(90, "min")
 
-    def _make_DL_6_10_DH_6_10(days, instat):
+    def _make_DL_6_10_DH_6_10(days: int, instat):
         def template(self):
             stat = self._preroll(days, instat)
             return stat.std() / stat.mean() * 100
@@ -1094,7 +1088,7 @@ dimensionless—spatial"""
     def DL11(self):
         return self.data_yearly_min.mean() / self.MA2()
 
-    def _make_DL_12_13_DH_12_13(days, instat):
+    def _make_DL_12_13_DH_12_13(days: int, instat: str):
         def template(self):
             stat = self._preroll(days, instat)
             return stat.mean() / self.MA2()
@@ -1112,12 +1106,12 @@ dimensionless—spatial"""
 
     def DL16(self):
         thresh = self.data.quantile(0.25)
-        _, lfdur, _ = self._lf(thresh, "<")
+        _, lfdur, _ = self.event_statistics(thresh, "<")
         return lfdur.median()
 
     def DL17(self):
         thresh = self.data.quantile(0.25)
-        _, lfdur, _ = self._lf(thresh, "<")
+        _, lfdur, _ = self.event_statistics(thresh, "<")
         return lfdur.std() / lfdur.mean() * 100
 
     def DL18(self):
@@ -1164,48 +1158,38 @@ dimensionless—spatial"""
 
     def DH15(self):
         thresh = self.data.quantile(0.75)
-        _, lfdur, _ = self._lf(thresh, ">")
+        _, lfdur, _ = self.event_statistics(thresh, ">")
         return lfdur.median()
 
     def DH16(self):
         thresh = self.data.quantile(0.75)
-        _, lfdur, _ = self._lf(thresh, ">")
+        _, lfdur, _ = self.event_statistics(thresh, ">")
         return lfdur.std() / lfdur.mean() * 100
 
     def DH17(self):
         thresh = self.MA2()
-        _, lfdur, _ = self._lf(thresh, ">")
-        if self.use_median:
-            return lfdur.median()
-        return lfdur.mean()
+        _, lfdur, _ = self.event_statistics(thresh, ">")
+        return lfdur.median() if self.use_median else lfdur.mean()
 
     def DH18(self):
         thresh = self.MA2() * 3
-        _, lfdur, _ = self._lf(thresh, ">")
-        if self.use_median:
-            return lfdur.median()
-        return lfdur.mean()
+        _, lfdur, _ = self.event_statistics(thresh, ">")
+        return lfdur.median() if self.use_median else lfdur.mean()
 
     def DH19(self):
         thresh = self.MA2() * 7
-        _, lfdur, _ = self._lf(thresh, ">")
-        if self.use_median:
-            return lfdur.median()
-        return lfdur.mean()
+        _, lfdur, _ = self.event_statistics(thresh, ">")
+        return lfdur.median() if self.use_median else lfdur.mean()
 
     def DH20(self):
         thresh = self.data.quantile(0.75)
-        _, lfdur, _ = self._lf(thresh, ">")
-        if self.use_median:
-            return lfdur.median()
-        return lfdur.mean()
+        _, lfdur, _ = self.event_statistics(thresh, ">")
+        return lfdur.median() if self.use_median else lfdur.mean()
 
     def DH21(self):
         thresh = self.data.quantile(0.25)
-        _, lfdur, _ = self._lf(thresh, ">")
-        if self.use_median:
-            return lfdur.median()
-        return lfdur.mean()
+        _, lfdur, _ = self.event_statistics(thresh, ">")
+        return lfdur.median() if self.use_median else lfdur.mean()
 
     def _pre_ta1_ta2(self):
         nrows = 11
@@ -1256,11 +1240,11 @@ dimensionless—spatial"""
         return nrows, HY, HXY
 
     def TA1(self):
-        nrows, HY, HXY = self._pre_ta1_ta2()
+        nrows, HY, _ = self._pre_ta1_ta2()
         return 1 - (HY / np.log10(nrows))
 
     def TA2(self):
-        nrows, HY, HXY = self._pre_ta1_ta2()
+        nrows, _, HXY = self._pre_ta1_ta2()
         return 100 * (1 - (HXY / np.log10(nrows)))
 
     def _min_max_doy(self, stat):
@@ -1306,17 +1290,16 @@ dimensionless—spatial"""
         xbar, ybar = self._min_max_doy("min")
         temp = np.sqrt(xbar * xbar + ybar * ybar)
         temp = np.sqrt(2 * (1 - temp))
-        TL2 = temp * 180 / np.pi / 360 * 365.25
-        return TL2
+        return temp * 180 / np.pi / 360 * 365.25
 
     def TH1(self):
         """TH1
-        Julian date of annual maximum. Determine the Julian date of the maximum flow
-        for each year. Transform the dates to relative values on a circular scale
-        (radians or degrees). Compute the x and y components for each year, and average
-        them across all years. Compute the mean angle as the arc tangent of y-mean
-        divided by x-mean. Transform the resultant angle back to Julian date.
-        Julian day—spatial"""
+        Julian date of annual maximum. Determine the Julian date of the maximum
+        flow for each year. Transform the dates to relative values on a circular
+        scale (radians or degrees). Compute the x and y components for each
+        year, and average them across all years. Compute the mean angle as the
+        arc tangent of y-mean divided by x-mean. Transform the resultant angle
+        back to Julian date.  Julian day—spatial"""
         xbar, ybar = self._min_max_doy("max")
         TH1 = np.arctan2(ybar, xbar) * 180.0 / np.pi
         if TH1 < 0.0:
@@ -1332,8 +1315,7 @@ dimensionless—spatial"""
         xbar, ybar = self._min_max_doy("max")
         temp = np.sqrt(xbar * xbar + ybar * ybar)
         temp = np.sqrt(2 * (1 - temp))
-        TH2 = temp * 180 / np.pi / 360 * 365.25
-        return TH2
+        return temp * 180 / np.pi / 360 * 365.25
 
     def _rise_rate(self):
         delt = self.data.shift(1) - self.data
@@ -1388,9 +1370,7 @@ dimensionless—spatial"""
 
     def RA8(self):
         df = self._changes()
-        if self.use_median:
-            return df.median()
-        return df.mean()
+        return df.median() if self.use_median else df.mean()
 
     def RA9(self):
         df = self._changes()

@@ -91,6 +91,5 @@ def Backward(Q, b_LH, a):
         b[i - 1] = b[i] / a
         if b[i] == 0:
             b[i - 1] = Q[i - 1]
-        if b[i - 1] > Q[i - 1]:
-            b[i - 1] = Q[i - 1]
+        b[i - 1] = min(b[i - 1], Q[i - 1])
     return b

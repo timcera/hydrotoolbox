@@ -7,7 +7,9 @@ hydrotoolbox baseflow eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
+
 import datetime
+import itertools
 import os.path
 import re
 import sys
@@ -23,13 +25,14 @@ try:
     from pydantic import validate_call
 except ImportError:
     from pydantic import validate_arguments as validate_call
+
 from scipy.signal import find_peaks
-from toolbox_utils import tsutils
 
 from . import baseflow_sep
 from .baseflow.comparison import strict_baseflow
 from .baseflow.param_estimate import recession_coefficient
 from .indices import indices as ind
+from .toolbox_utils.src.toolbox_utils import tsutils
 
 warnings.filterwarnings("ignore")
 
@@ -1077,385 +1080,351 @@ def _indices_cli(
 ):
     """Calculate hydrologic indices.
 
-    +------+--------------------------------------------------------------------+
-    | Code | Description                                                        |
-    +======+====================================================================+
-    | MA1  | Mean of the daily mean flow values for the entire flow record.     |
-    |      | cubic feet per second—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | MA2  | Median of the daily mean flow values for the entire flow record.   |
-    |      | cubic feet per second—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | MA3  | Mean (or median) of the coefficients of variation (standard        |
-    |      | deviation/mean) for each year.  Compute the coefficient of         |
-    |      | variation for each year of daily flows. Compute the mean of the    |
-    |      | annual coefficients of variation.                                  |
-    |      | percent—temporal                                                   |
-    +------+--------------------------------------------------------------------+
-    | MA4  | Standard deviation of the percentiles of the logs of the entire    |
-    |      | flow record divided by the mean of percentiles of the logs.        |
-    |      | Compute the log10 of the daily flows for the entire record.        |
-    |      | Compute the 5th, 10th, 15th, 20th, 25th, 30th, 35th, 40th, 45th,   |
-    |      | 50th, 55th, 60th, 65th, 70th, 75th, 80th, 85th, 90th, and 95th     |
-    |      | percentiles for the logs of the entire flow record.                |
-    |      | Percentiles are computed by interpolating between the ordered      |
-    |      | (ascending) logs of the flow values. Compute the standard          |
-    |      | deviation and mean for the percentile values. Divide the standard  |
-    |      | deviation by the mean.                                             |
-    |      | percent–spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | MA5  | The skewness of the entire flow record is computed as the mean for |
-    |      | the entire flow record (MA1) divided by the median (MA2) for the   |
-    |      | entire flow record.                                                |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA6  | Range in daily flows is the ratio of the 10-percent to 90-percent  |
-    |      | exceedance values for the entire flow record. Compute the          |
-    |      | 5-percent to 95-percent exceedance values for the entire           |
-    |      | flow record. Exceedance is computed by interpolating between the   |
-    |      | ordered (descending) flow values.  Divide the 10-percent           |
-    |      | exceedance value by the 90-percent value.                          |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA7  | Range in daily flows is computed like MA6, except using the 20     |
-    |      | percent and 80 percent exceedance values. Divide the 20 percent    |
-    |      | exceedance value by the 80 percent value.                          |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA8  | Range in daily flows is computed like MA6, except using the        |
-    |      | 25-percent and 75-percent exceedance values. Divide the 25-percent |
-    |      | exceedance value by the 75-percent value.                          |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA9  | Spread in daily flows is the ratio of the difference between the   |
-    |      | 90th and 10th percentile of the logs of the flow data to the log   |
-    |      | of the median of the entire flow record. Compute the log10 of the  |
-    |      | daily flows for the entire record.  Compute the 5th, 10th, 15th,   |
-    |      | 20th, 25th, 30th, 35th, 40th, 45th, 50th, 55th, 60th, 65th, 70th,  |
-    |      | 75th, 80th, 85th, 90th, and 95th percentiles for the logs of the   |
-    |      | entire flow record. Percentiles are computed by interpolating      |
-    |      | between the ordered (ascending) logs of the flow values.  Compute  |
-    |      | MA9 as (90th –10th) /log10(MA2).                                   |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA10 | Spread in daily flows is computed like MA9, except using the 20th  |
-    |      | and 80th percentiles.                                              |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA11 | Spread in daily flows is computed like MA9, except using the 25th  |
-    |      | and 75th percentiles.                                              |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA12 | Means (or medians) of monthly flow values. Compute the means for   |
-    | to   | each.  Means (or medians) of monthly flow values. Compute the      |
-    | MA23 | means for each month over the entire flow record. For example,    |
-    |      | MA12 is the mean of all January flow values over the entire record |
-    |      | (cubic feet per second— temporal).                                 |
-    +------+--------------------------------------------------------------------+
-    | MA24 | Variability (coefficient of variation) of monthly flow values.     |
-    | to   | Compute the standard deviation for each.  Variability (coefficient |
-    | MA35 | of month in each year over the entire flow record. Divide the      |
-    |      | standard deviation by the mean for each month. Average (or take    |
-    |      | median of) these values for each month across all years.           |
-    |      | percent—temporal                                                   |
-    +------+--------------------------------------------------------------------+
-    | MA36 | Variability across monthly flows. Compute the minimum, maximum,    |
-    |      | and mean flows for each month in the entire flow record.  MA36 is  |
-    |      | the maximum monthly flow minus the minimum monthly flow divided by |
-    |      | the median monthly flow.                                           |
-    |      | dimensionless-spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA37 | Variability across monthly flows. Compute the first (25th          |
-    |      | percentile) and the third (75th percentile) quartiles (every month |
-    |      | in dimensionless— the flow record). MA37 is the third quartile     |
-    |      | minus the first quartile divided by the median of the monthly      |
-    |      | means.                                                             |
-    +------+--------------------------------------------------------------------+
-    | MA38 | Variability across monthly flows. Compute the 10th and 90th        |
-    |      | percentiles for the monthly means (every month in the flow         |
-    |      | record). MA38 is the 90th percentile minus the 10th percentile     |
-    |      | divided by the median of the monthly means.                        |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA39 | Variability across monthly flows. Compute the standard deviation   |
-    |      | for the monthly means. MA39 is the standard deviation times 100    |
-    |      | divided by the mean of the monthly means.                          |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | MA40 | Skewness in the monthly flows. MA40 is the mean of the monthly     |
-    |      | flow means minus the median of the monthly means divided by the    |
-    |      | median of the monthly means.                                       |
-    |      | dimensionles-sspatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA41 | Annual runoff. Compute the annual mean daily flows. MA41 is the    |
-    |      | mean of the annual means divided by the drainage area.             |
-    |      | cubic feet per second/ square mile—temporal                        |
-    +------+--------------------------------------------------------------------+
-    | MA42 | Variability across annual flows. MA42 is the maximum annual flow   |
-    |      | minus the minimum annual flow divided by the median annual flow.   |
-    |      | dimensionless-spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA43 | Variability across annual flows. Compute the first (25th           |
-    |      | percentile) and third (75th percentile) quartiles and the 10th and |
-    |      | 90th — percentiles for the annual means (every year in the flow    |
-    |      | record). MA43 is the third quartile minus the first quartile       |
-    |      | divided by the median of the annual means.                         |
-    |      | dimensionless-spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA44 | Variability across annual flows. Compute the first (25th           |
-    |      | percentile) and third (75th percentile) quartiles and the 10th and |
-    |      | 90th percentiles for the annual means (every year in the flow      |
-    |      | record). MA44 is the 90th percentile minus the 10th percentile     |
-    |      | divided by the median of the annual means.                         |
-    |      | dimensionless-spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MA45 | Skewness in the annual flows. MA45 is the mean of the annual flow  |
-    |      | means minus the median of the annual means divided by the median   |
-    |      | of the annual means.                                               |
-    |      | dimensionless-spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | ML1  | Mean (or median) of minimum flows for each month across all years. |
-    | to   | Compute the minimums for each month over the entire flow record.   |
-    | ML12 | For example, ML1 is the mean of the minimums of all | January flow |
-    |      | values over the entire record.                                     |
-    |      | cubic feet per second— temporal                                    |
-    +------+--------------------------------------------------------------------+
-    | ML13 | Variability (coefficient of variation) across minimum monthly flow |
-    |      | values. Compute the mean and standard deviation for the minimum    |
-    |      | monthly flows over the entire flow record. ML13 is the standard    |
-    |      | deviation times 100 divided by the mean minimum monthly flow for   |
-    |      | all years.                                                         |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | ML14 | Compute the minimum annual flow for each year. ML14 is the mean of |
-    |      | the ratios of minimum annual flows to the median flow for each     |
-    |      | year.                                                              |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | ML15 | Low-flow index. ML15 is the mean of the ratios of minimum annual   |
-    |      | flows to the mean flow for each year.                              |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | ML16 | Median of annual minimum flows. ML16 is the median of the ratios   |
-    |      | of minimum annual flows to the median flow for each year.          |
-    |      | dimensionless— temporal                                            |
-    +------+--------------------------------------------------------------------+
-    | ML17 | Base flow. Compute the mean annual flows. Compute the minimum of   |
-    |      | a 7-day moving average flows for each year and divide them by the  |
-    |      | mean annual flow for that year. ML17 is the mean (or median—Use    |
-    |      | Preferenceset by using the Preference option) of those ratios.     |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | ML18 | Variability in base flow. Compute the standard deviation for the   |
-    |      | ratios of 7-day moving average flows to mean annual flows for each |
-    |      | year. ML18 is the standard deviation times 100 divided by the mean |
-    |      | of the ratios.                                                     |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | ML19 | Base flow. Compute the ratios of the minimum annual flow to mean   |
-    |      | annual flow for each year. ML19 is the mean (or median) of these   |
-    |      | ratios times 100.                                                  |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | ML20 | Base flow. Divide the daily flow record into 5-day blocks. Find    |
-    |      | the minimum flow for each block. Assign the minimum flow as        |
-    |      | a base flow for that block if 90 percent of that minimum flow is   |
-    |      | less than the minimum flows for the blocks on either side.         |
-    |      | Otherwise, set it to zero. Fill in the zero values using linear    |
-    |      | interpolation. Compute the total flow for the entire record and    |
-    |      | the total base flow for the entire record. ML20 is the ratio of    |
-    |      | total flow to total base flow.                                     |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | ML21 | Variability across annual minimum flows. Compute the mean and      |
-    |      | standard deviation for the annual minimum flows. ML21 is the       |
-    |      | standard deviation times 100 divided by the mean.                  |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | ML22 | Specific mean annual minimum flow. ML22 is the mean (or median) of |
-    |      | the annual minimum flows divided by the drainage area.             |
-    |      | cubic feet per second/square mile—temporal                         |
-    +------+--------------------------------------------------------------------+
-    | MH1  | Mean (or median) maximum flows for each month across all years.    |
-    | to   | Compute the maximums for each month over the entire cubic feet per |
-    | MH12 | flow record. For example, MH1 is the mean of the maximums of all   |
-    |      | January flow values over the entire record.                        |
-    |      | second—temporal                                                    |
-    +------+--------------------------------------------------------------------+
-    | MH13 | Variability (coefficient of variation) across maximum monthly flow |
-    |      | values. Compute the mean and standard deviation for the maximum    |
-    |      | monthly flows over the entire flow record. MH13 is the standard    |
-    |      | deviation times 100 divided by the mean maximum monthly flow for   |
-    |      | all years.                                                         |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | MH14 | Median of annual maximum flows. Compute the annual maximum flows   |
-    |      | from monthly maximum flows. Compute the ratio of annual maximum    |
-    |      | flow to median annual flow for each year. MH14 is the median of    |
-    |      | these ratios.                                                      |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | MH15 | High flow discharge index. Compute the 1-percent exceedance value  |
-    |      | for the entire data record. MH15 is the 1-percent exceedance value |
-    |      | divided by the median flow for the entire record.                  |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MH16 | High flow discharge index. Compute the 10-percent exceedance value |
-    |      | for the entire data record. MH16 is the 10-percent exceedance      |
-    |      | value divided by the median flow for the entire record.            |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MH17 | High flow discharge index. Compute the 25-percent exceedance value |
-    |      | for the entire data record. MH17 is the 25-percent exceedance      |
-    |      | value divided by the median flow for the entire record.            |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MH18 | Variability across annual maximum flows. Compute the logs (log10)  |
-    |      | of the maximum annual flows. Find the standard percent—spatial     |
-    |      | deviation and mean for these values. MH18 is the standard          |
-    |      | deviation times 100 divided by the mean.                           |
-    +------+--------------------------------------------------------------------+
-    | MH19 | Skewness in annual maximum flows.                                  |
-    |      | dimensionless—spatial                                              |
-    +------+--------------------------------------------------------------------+
-    | MH20 | Specific mean annual maximum flow. MH20 is the mean (or median) of |
-    |      | the annual maximum flows divided by the drainage area.             |
-    |      | cubic feet per second/square mile—temporal                         |
-    +------+--------------------------------------------------------------------+
-    | MH21 | High flow volume index. Compute the average volume for flow events |
-    |      | above a threshold equal to the median flow for the entire record.  |
-    |      | MH21 is the average volume divided by the median flow for the      |
-    |      | entire record.                                                     |
-    |      | days—temporal                                                      |
-    +------+--------------------------------------------------------------------+
-    | MH22 | High flow volume. Compute the average volume for flow events above |
-    |      | a threshold equal to three times the median flow for the entire    |
-    |      | record. MH22 is the average volume divided by the median flow for  |
-    |      | the entire record.                                                 |
-    |      | days—temporal                                                      |
-    +------+--------------------------------------------------------------------+
-    | MH23 | High flow volume. Compute the average volume for flow events above |
-    |      | a threshold equal to seven times the median flow for the entire    |
-    |      | record. MH23 is the average volume divided by the median flow for  |
-    |      | the entire record.                                                 |
-    |      | days—temporal                                                      |
-    +------+--------------------------------------------------------------------+
-    | MH24 | High peak flow. Compute the average peak flow value for flow       |
-    |      | events above a threshold equal to the median flow for the entire   |
-    |      | record. MH24 is the average peak flow divided by the median flow   |
-    |      | for the entire record.                                             |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | MH25 | High peak flow.  Compute the average peak flow value for flow      |
-    |      | events above a threshold equal to three times the median flow      |
-    |      | for the entire record.  MH25 is the average peak flow divided by   |
-    |      | the median flow for the entire record.                             |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | MH26 | High peak flow. Compute the average peak flow value for flow       |
-    |      | events above a threshold equal to seven times the median flow for  |
-    |      | the entire record. MH26 is the average peak flow divided by the    |
-    |      | median flow for the entire record.                                 |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | MH27 | High peak flow.  Compute the average peak flow value for flow      |
-    |      | events above a threshold equal to 75th-percentile value for the    |
-    |      | entire flow record. MH27 is the average peak flow divided by the   |
-    |      | median flow for the entire record.                                 |
-    |      | dimensionless—temporal                                             |
-    +------+--------------------------------------------------------------------+
-    | FL1  | Low flood pulse count. Compute the average number of flow events   |
-    |      | with flows below a threshold equal to the 25th-percentile value    |
-    |      | for the entire flow record. FL1 is the average (or median) number  |
-    |      | of events.                                                         |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FL2  | Variability in low pulse count. Compute the standard deviation in  |
-    |      | the annual pulse counts for FL1. FL2 is 100 times the standard     |
-    |      | deviation divided by the mean pulse count.                         |
-    |      | percent—spatial                                                    |
-    +------+--------------------------------------------------------------------+
-    | FL3  | Frequency of low pulse spells. Compute the average number of flow  |
-    |      | events with flows below a threshold equal to 5 percent of the mean |
-    |      | flow value for the entire flow record. FL3 is the average (or      |
-    |      | median) number of events.                                          |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH1  | High flood pulse count. Compute the average number of flow events  |
-    |      | with flows above a threshold equal to the 75th-percentile value    |
-    |      | for the entire flow record. FH1 is the average (or median) number  |
-    |      | of events.                                                         |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH2  | Variability in high pulse count. Compute the standard deviation in |
-    |      | the annual pulse counts for FH1. FH2 is 100 times the standard     |
-    |      | deviation divided by the mean pulse count.                         |
-    |      | number of events/year—spatial                                      |
-    +------+--------------------------------------------------------------------+
-    | FH3  | High flood pulse count. Compute the average number of days per     |
-    |      | year that the flow is above a threshold equal to three times the   |
-    |      | median flow for the entire record. FH3 is the mean (or median) of  |
-    |      | the annual number of days for all years.                           |
-    |      | number of days/year—temporal                                       |
-    +------+--------------------------------------------------------------------+
-    | FH4  | High flood pulse count. Compute the average number of days per     |
-    |      | year that the flow is above a threshold equal to seven times the   |
-    |      | median flow for the entire record. FH4 is the mean (or median) of  |
-    |      | the annual number of days for all years.                           |
-    |      | number of days/year—temporal                                       |
-    +------+--------------------------------------------------------------------+
-    | FH5  | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to the median flow value for the     |
-    |      | entire flow record. FH5 is the average (or median) number of       |
-    |      | events.                                                            |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH6  | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to three times the median flow value |
-    |      | for the entire flow record. FH6 is the average (or median) number  |
-    |      | of events.                                                         |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH7  | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to seven times the median flow value |
-    |      | for the entire flow record. FH6 is the average (or median) number  |
-    |      | of events.                                                         |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH8  | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to 25-percent exceedance value for   |
-    |      | the entire flow record. FH8 is the average (or median) number of   |
-    |      | events.                                                            |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH9  | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to 75-percent exceedance value for   |
-    |      | the entire flow record. FH9 is the average (or median) number of   |
-    |      | events.                                                            |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | FH10 | Flood frequency. Compute the average number of flow events with    |
-    |      | flows above a threshold equal to median of the annual cubic        |
-    |      | feet/second minima for the entire flow record. FH10 is the average |
-    |      | (or median) number of events.                                      |
-    |      | number of events/year—temporal                                     |
-    +------+--------------------------------------------------------------------+
-    | DL1  | Annual minimum daily flow. Compute the minimum 1-day average flow  |
-    |      | for each year. DL1 is the mean (or median) of these cubic feet per |
-    |      | values. second—temporal                                            |
-    +------+--------------------------------------------------------------------+
-    | DL2  | Annual minimum of 3-day moving average flow. Compute the minimum   |
-    |      | of a 3-day moving average flow for each year. DL2 cubic feet per   |
-    |      | is the mean (or median) of these values. second—temporal           |
-    +------+--------------------------------------------------------------------+
-    | DL3  | Annual minimum of 7-day moving average flow. Compute the minimum   |
-    |      | of a 7-day moving average flow for each year. DL3 cubic feet per   |
-    |      | is the mean (or median) of these values. second—temporal           |
-    +------+--------------------------------------------------------------------+
-    | DL4  | Annual minimum of 30-day moving average flow. Compute the minimum  |
-    |      | of a 30-day moving average flow for each year. cubic feet per      |
-    |      | DL4 is the mean (or median) of these values. second—temporal       |
-    +------+--------------------------------------------------------------------+
+    +------+------------------------------------------------------------------+
+    | Code | Description                                                      |
+    +======+==================================================================+
+    | MA1  | Mean of the daily mean flow values for the entire flow record.   |
+    |      | cubic feet per second—temporal                                   |
+    +------+------------------------------------------------------------------+
+    | MA2  | Median of the daily mean flow values for the entire flow record. |
+    |      | cubic feet per second—temporal                                   |
+    +------+------------------------------------------------------------------+
+    | MA3  | Mean (or median) of the coefficients of variation (standard      |
+    |      | deviation/mean) for each year.  Compute the coefficient of       |
+    |      | variation for each year of daily flows. Compute the mean of the  |
+    |      | annual coefficients of variation. percent—temporal               |
+    +------+------------------------------------------------------------------+
+    | MA4  | Standard deviation of the percentiles of the logs of the entire  |
+    |      | flow record divided by the mean of percentiles of the logs.      |
+    |      | Compute the log10 of the daily flows for the entire record.      |
+    |      | Compute the 5th, 10th, 15th, 20th, 25th, 30th, 35th, 40th, 45th, |
+    |      | 50th, 55th, 60th, 65th, 70th, 75th, 80th, 85th, 90th, and 95th   |
+    |      | percentiles for the logs of the entire flow record. Percentiles  |
+    |      | are computed by interpolating between the ordered (ascending)    |
+    |      | logs of the flow values. Compute the standard deviation and mean |
+    |      | for the percentile values. Divide the standard deviation by the  |
+    |      | mean. percent–spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA5  | The skewness of the entire flow record is computed as the mean   |
+    |      | for the entire flow record (MA1) divided by the median (MA2) for |
+    |      | the entire flow record. dimensionless—spatial                    |
+    +------+------------------------------------------------------------------+
+    | MA6  | Range in daily flows is the ratio of the 10-percent to           |
+    |      | 90-percent exceedance values for the entire flow record. Compute |
+    |      | the 5-percent to 95-percent exceedance values for the entire     |
+    |      | flow record. Exceedance is computed by interpolating between the |
+    |      | ordered (descending) flow values.  Divide the 10-percent         |
+    |      | exceedance value by the 90-percent value. dimensionless—spatial  |
+    +------+------------------------------------------------------------------+
+    | MA7  | Range in daily flows is computed like MA6, except using the 20   |
+    |      | percent and 80 percent exceedance values. Divide the 20 percent  |
+    |      | exceedance value by the 80 percent value. dimensionless—spatial  |
+    +------+------------------------------------------------------------------+
+    | MA8  | Range in daily flows is computed like MA6, except using the      |
+    |      | 25-percent and 75-percent exceedance values. Divide the          |
+    |      | 25-percent exceedance value by the 75-percent value.             |
+    |      | dimensionless—spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA9  | Spread in daily flows is the ratio of the difference between the |
+    |      | 90th and 10th percentile of the logs of the flow data to the log |
+    |      | of the median of the entire flow record. Compute the log10 of    |
+    |      | the daily flows for the entire record.  Compute the 5th, 10th,   |
+    |      | 15th, 20th, 25th, 30th, 35th, 40th, 45th, 50th, 55th, 60th,      |
+    |      | 65th, 70th, 75th, 80th, 85th, 90th, and 95th percentiles for the |
+    |      | logs of the entire flow record. Percentiles are computed by      |
+    |      | interpolating between the ordered (ascending) logs of the flow   |
+    |      | values.  Compute MA9 as (90th –10th) /log10(MA2).                |
+    |      | dimensionless—spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA10 | Spread in daily flows is computed like MA9, except using the     |
+    |      | 20th and 80th percentiles. dimensionless—spatial                 |
+    +------+------------------------------------------------------------------+
+    | MA11 | Spread in daily flows is computed like MA9, except using the     |
+    |      | 25th and 75th percentiles. dimensionless—spatial                 |
+    +------+------------------------------------------------------------------+
+    | MA12 | Means (or medians) of monthly flow values. Compute the means for |
+    | to   | each.  Means (or medians) of monthly flow values. Compute the    |
+    | MA23 | means for each month over the entire flow record. For example,   |
+    |      | MA12 is the mean of all January flow values over the entire      |
+    |      | record (cubic feet per second— temporal).                        |
+    +------+------------------------------------------------------------------+
+    | MA24 | Variability (coefficient of variation) of monthly flow values.   |
+    | to   | Compute the standard deviation for each.  Variability            |
+    | MA35 | (coefficient of month in each year over the entire flow record.  |
+    |      | Divide the standard deviation by the mean for each month.        |
+    |      | Average (or take median of) these values for each month across   |
+    |      | all years. percent—temporal                                      |
+    +------+------------------------------------------------------------------+
+    | MA36 | Variability across monthly flows. Compute the minimum, maximum,  |
+    |      | and mean flows for each month in the entire flow record.  MA36   |
+    |      | is the maximum monthly flow minus the minimum monthly flow       |
+    |      | divided by the median monthly flow. dimensionless-spatial        |
+    +------+------------------------------------------------------------------+
+    | MA37 | Variability across monthly flows. Compute the first (25th        |
+    |      | percentile) and the third (75th percentile) quartiles (every     |
+    |      | month in dimensionless— the flow record). MA37 is the third      |
+    |      | quartile minus the first quartile divided by the median of the   |
+    |      | monthly means.                                                   |
+    +------+------------------------------------------------------------------+
+    | MA38 | Variability across monthly flows. Compute the 10th and 90th      |
+    |      | percentiles for the monthly means (every month in the flow       |
+    |      | record). MA38 is the 90th percentile minus the 10th percentile   |
+    |      | divided by the median of the monthly means.                      |
+    |      | dimensionless—spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA39 | Variability across monthly flows. Compute the standard deviation |
+    |      | for the monthly means. MA39 is the standard deviation times 100  |
+    |      | divided by the mean of the monthly means. percent—spatial        |
+    +------+------------------------------------------------------------------+
+    | MA40 | Skewness in the monthly flows. MA40 is the mean of the monthly   |
+    |      | flow means minus the median of the monthly means divided by the  |
+    |      | median of the monthly means. dimensionles-sspatial               |
+    +------+------------------------------------------------------------------+
+    | MA41 | Annual runoff. Compute the annual mean daily flows. MA41 is the  |
+    |      | mean of the annual means divided by the drainage area. cubic     |
+    |      | feet per second/ square mile—temporal                            |
+    +------+------------------------------------------------------------------+
+    | MA42 | Variability across annual flows. MA42 is the maximum annual flow |
+    |      | minus the minimum annual flow divided by the median annual flow. |
+    |      | dimensionless-spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA43 | Variability across annual flows. Compute the first (25th         |
+    |      | percentile) and third (75th percentile) quartiles and the 10th   |
+    |      | and 90th — percentiles for the annual means (every year in the   |
+    |      | flow record). MA43 is the third quartile minus the first         |
+    |      | quartile divided by the median of the annual means.              |
+    |      | dimensionless-spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA44 | Variability across annual flows. Compute the first (25th         |
+    |      | percentile) and third (75th percentile) quartiles and the 10th   |
+    |      | and 90th percentiles for the annual means (every year in the     |
+    |      | flow record). MA44 is the 90th percentile minus the 10th         |
+    |      | percentile divided by the median of the annual means.            |
+    |      | dimensionless-spatial                                            |
+    +------+------------------------------------------------------------------+
+    | MA45 | Skewness in the annual flows. MA45 is the mean of the annual     |
+    |      | flow means minus the median of the annual means divided by the   |
+    |      | median of the annual means. dimensionless-spatial                |
+    +------+------------------------------------------------------------------+
+    | ML1  | Mean (or median) of minimum flows for each month across all      |
+    | to   | years. Compute the minimums for each month over the entire flow  |
+    | ML12 | record. For example, ML1 is the mean of the minimums of all      |
+    |      | January flow values over the entire record. cubic feet per       |
+    |      | second— temporal                                                 |
+    +------+------------------------------------------------------------------+
+    | ML13 | Variability (coefficient of variation) across minimum monthly    |
+    |      | flow values. Compute the mean and standard deviation for the     |
+    |      | minimum monthly flows over the entire flow record. ML13 is the   |
+    |      | standard deviation times 100 divided by the mean minimum monthly |
+    |      | flow for all years. percent—spatial                              |
+    +------+------------------------------------------------------------------+
+    | ML14 | Compute the minimum annual flow for each year. ML14 is the mean  |
+    |      | of the ratios of minimum annual flows to the median flow for     |
+    |      | each year. dimensionless—temporal                                |
+    +------+------------------------------------------------------------------+
+    | ML15 | Low-flow index. ML15 is the mean of the ratios of minimum annual |
+    |      | flows to the mean flow for each year. dimensionless—temporal     |
+    +------+------------------------------------------------------------------+
+    | ML16 | Median of annual minimum flows. ML16 is the median of the ratios |
+    |      | of minimum annual flows to the median flow for each year.        |
+    |      | dimensionless— temporal                                          |
+    +------+------------------------------------------------------------------+
+    | ML17 | Base flow. Compute the mean annual flows. Compute the minimum of |
+    |      | a 7-day moving average flows for each year and divide them by    |
+    |      | the mean annual flow for that year. ML17 is the mean (or         |
+    |      | median—Use Preferenceset by using the Preference option) of      |
+    |      | those ratios. dimensionless—temporal                             |
+    +------+------------------------------------------------------------------+
+    | ML18 | Variability in base flow. Compute the standard deviation for the |
+    |      | ratios of 7-day moving average flows to mean annual flows for    |
+    |      | each year. ML18 is the standard deviation times 100 divided by   |
+    |      | the mean of the ratios. percent—spatial                          |
+    +------+------------------------------------------------------------------+
+    | ML19 | Base flow. Compute the ratios of the minimum annual flow to mean |
+    |      | annual flow for each year. ML19 is the mean (or median) of these |
+    |      | ratios times 100. dimensionless—temporal                         |
+    +------+------------------------------------------------------------------+
+    | ML20 | Base flow. Divide the daily flow record into 5-day blocks. Find  |
+    |      | the minimum flow for each block. Assign the minimum flow as a    |
+    |      | base flow for that block if 90 percent of that minimum flow is   |
+    |      | less than the minimum flows for the blocks on either side.       |
+    |      | Otherwise, set it to zero. Fill in the zero values using linear  |
+    |      | interpolation. Compute the total flow for the entire record and  |
+    |      | the total base flow for the entire record. ML20 is the ratio of  |
+    |      | total flow to total base flow. dimensionless—spatial             |
+    +------+------------------------------------------------------------------+
+    | ML21 | Variability across annual minimum flows. Compute the mean and    |
+    |      | standard deviation for the annual minimum flows. ML21 is the     |
+    |      | standard deviation times 100 divided by the mean.                |
+    |      | percent—spatial                                                  |
+    +------+------------------------------------------------------------------+
+    | ML22 | Specific mean annual minimum flow. ML22 is the mean (or median)  |
+    |      | of the annual minimum flows divided by the drainage area. cubic  |
+    |      | feet per second/square mile—temporal                             |
+    +------+------------------------------------------------------------------+
+    | MH1  | Mean (or median) maximum flows for each month across all years.  |
+    | to   | Compute the maximums for each month over the entire cubic feet   |
+    | MH12 | per flow record. For example, MH1 is the mean of the maximums of |
+    |      | all January flow values over the entire record. second—temporal  |
+    +------+------------------------------------------------------------------+
+    | MH13 | Variability (coefficient of variation) across maximum monthly    |
+    |      | flow values. Compute the mean and standard deviation for the     |
+    |      | maximum monthly flows over the entire flow record. MH13 is the   |
+    |      | standard deviation times 100 divided by the mean maximum monthly |
+    |      | flow for all years. percent—spatial                              |
+    +------+------------------------------------------------------------------+
+    | MH14 | Median of annual maximum flows. Compute the annual maximum flows |
+    |      | from monthly maximum flows. Compute the ratio of annual maximum  |
+    |      | flow to median annual flow for each year. MH14 is the median of  |
+    |      | these ratios. dimensionless—temporal                             |
+    +------+------------------------------------------------------------------+
+    | MH15 | High flow discharge index. Compute the 1-percent exceedance      |
+    |      | value for the entire data record. MH15 is the 1-percent          |
+    |      | exceedance value divided by the median flow for the entire       |
+    |      | record. dimensionless—spatial                                    |
+    +------+------------------------------------------------------------------+
+    | MH16 | High flow discharge index. Compute the 10-percent exceedance     |
+    |      | value for the entire data record. MH16 is the 10-percent         |
+    |      | exceedance value divided by the median flow for the entire       |
+    |      | record. dimensionless—spatial                                    |
+    +------+------------------------------------------------------------------+
+    | MH17 | High flow discharge index. Compute the 25-percent exceedance     |
+    |      | value for the entire data record. MH17 is the 25-percent         |
+    |      | exceedance value divided by the median flow for the entire       |
+    |      | record. dimensionless—spatial                                    |
+    +------+------------------------------------------------------------------+
+    | MH18 | Variability across annual maximum flows. Compute the logs        |
+    |      | (log10) of the maximum annual flows. Find the standard           |
+    |      | percent—spatial deviation and mean for these values. MH18 is the |
+    |      | standard deviation times 100 divided by the mean.                |
+    +------+------------------------------------------------------------------+
+    | MH19 | Skewness in annual maximum flows. dimensionless—spatial          |
+    +------+------------------------------------------------------------------+
+    | MH20 | Specific mean annual maximum flow. MH20 is the mean (or median)  |
+    |      | of the annual maximum flows divided by the drainage area. cubic  |
+    |      | feet per second/square mile—temporal                             |
+    +------+------------------------------------------------------------------+
+    | MH21 | High flow volume index. Compute the average volume for flow      |
+    |      | events above a threshold equal to the median flow for the entire |
+    |      | record. MH21 is the average volume divided by the median flow    |
+    |      | for the entire record. days—temporal                             |
+    +------+------------------------------------------------------------------+
+    | MH22 | High flow volume. Compute the average volume for flow events     |
+    |      | above a threshold equal to three times the median flow for the   |
+    |      | entire record. MH22 is the average volume divided by the median  |
+    |      | flow for the entire record. days—temporal                        |
+    +------+------------------------------------------------------------------+
+    | MH23 | High flow volume. Compute the average volume for flow events     |
+    |      | above a threshold equal to seven times the median flow for the   |
+    |      | entire record. MH23 is the average volume divided by the median  |
+    |      | flow for the entire record. days—temporal                        |
+    +------+------------------------------------------------------------------+
+    | MH24 | High peak flow. Compute the average peak flow value for flow     |
+    |      | events above a threshold equal to the median flow for the entire |
+    |      | record. MH24 is the average peak flow divided by the median flow |
+    |      | for the entire record. dimensionless—temporal                    |
+    +------+------------------------------------------------------------------+
+    | MH25 | High peak flow.  Compute the average peak flow value for flow    |
+    |      | events above a threshold equal to three times the median flow    |
+    |      | for the entire record.  MH25 is the average peak flow divided by |
+    |      | the median flow for the entire record. dimensionless—temporal    |
+    +------+------------------------------------------------------------------+
+    | MH26 | High peak flow. Compute the average peak flow value for flow     |
+    |      | events above a threshold equal to seven times the median flow    |
+    |      | for the entire record. MH26 is the average peak flow divided by  |
+    |      | the median flow for the entire record. dimensionless—temporal    |
+    +------+------------------------------------------------------------------+
+    | MH27 | High peak flow.  Compute the average peak flow value for flow    |
+    |      | events above a threshold equal to 75th-percentile value for the  |
+    |      | entire flow record. MH27 is the average peak flow divided by the |
+    |      | median flow for the entire record. dimensionless—temporal        |
+    +------+------------------------------------------------------------------+
+    | FL1  | Low flood pulse count. Compute the average number of flow events |
+    |      | with flows below a threshold equal to the 25th-percentile value  |
+    |      | for the entire flow record. FL1 is the average (or median)       |
+    |      | number of events. number of events/year—temporal                 |
+    +------+------------------------------------------------------------------+
+    | FL2  | Variability in low pulse count. Compute the standard deviation   |
+    |      | in the annual pulse counts for FL1. FL2 is 100 times the         |
+    |      | standard deviation divided by the mean pulse count.              |
+    |      | percent—spatial                                                  |
+    +------+------------------------------------------------------------------+
+    | FL3  | Frequency of low pulse spells. Compute the average number of     |
+    |      | flow events with flows below a threshold equal to 5 percent of   |
+    |      | the mean flow value for the entire flow record. FL3 is the       |
+    |      | average (or median) number of events. number of                  |
+    |      | events/year—temporal                                             |
+    +------+------------------------------------------------------------------+
+    | FH1  | High flood pulse count. Compute the average number of flow       |
+    |      | events with flows above a threshold equal to the 75th-percentile |
+    |      | value for the entire flow record. FH1 is the average (or median) |
+    |      | number of events. number of events/year—temporal                 |
+    +------+------------------------------------------------------------------+
+    | FH2  | Variability in high pulse count. Compute the standard deviation  |
+    |      | in the annual pulse counts for FH1. FH2 is 100 times the         |
+    |      | standard deviation divided by the mean pulse count. number of    |
+    |      | events/year—spatial                                              |
+    +------+------------------------------------------------------------------+
+    | FH3  | High flood pulse count. Compute the average number of days per   |
+    |      | year that the flow is above a threshold equal to three times the |
+    |      | median flow for the entire record. FH3 is the mean (or median)   |
+    |      | of the annual number of days for all years. number of            |
+    |      | days/year—temporal                                               |
+    +------+------------------------------------------------------------------+
+    | FH4  | High flood pulse count. Compute the average number of days per   |
+    |      | year that the flow is above a threshold equal to seven times the |
+    |      | median flow for the entire record. FH4 is the mean (or median)   |
+    |      | of the annual number of days for all years. number of            |
+    |      | days/year—temporal                                               |
+    +------+------------------------------------------------------------------+
+    | FH5  | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to the median flow value for the   |
+    |      | entire flow record. FH5 is the average (or median) number of     |
+    |      | events. number of events/year—temporal                           |
+    +------+------------------------------------------------------------------+
+    | FH6  | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to three times the median flow     |
+    |      | value for the entire flow record. FH6 is the average (or median) |
+    |      | number of events. number of events/year—temporal                 |
+    +------+------------------------------------------------------------------+
+    | FH7  | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to seven times the median flow     |
+    |      | value for the entire flow record. FH6 is the average (or median) |
+    |      | number of events. number of events/year—temporal                 |
+    +------+------------------------------------------------------------------+
+    | FH8  | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to 25-percent exceedance value for |
+    |      | the entire flow record. FH8 is the average (or median) number of |
+    |      | events. number of events/year—temporal                           |
+    +------+------------------------------------------------------------------+
+    | FH9  | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to 75-percent exceedance value for |
+    |      | the entire flow record. FH9 is the average (or median) number of |
+    |      | events. number of events/year—temporal                           |
+    +------+------------------------------------------------------------------+
+    | FH10 | Flood frequency. Compute the average number of flow events with  |
+    |      | flows above a threshold equal to median of the annual cubic      |
+    |      | feet/second minima for the entire flow record. FH10 is the       |
+    |      | average (or median) number of events. number of                  |
+    |      | events/year—temporal                                             |
+    +------+------------------------------------------------------------------+
+    | DL1  | Annual minimum daily flow. Compute the minimum 1-day average     |
+    |      | flow for each year. DL1 is the mean (or median) of these cubic   |
+    |      | feet per values. second—temporal                                 |
+    +------+------------------------------------------------------------------+
+    | DL2  | Annual minimum of 3-day moving average flow. Compute the minimum |
+    |      | of a 3-day moving average flow for each year. DL2 cubic feet per |
+    |      | is the mean (or median) of these values. second—temporal         |
+    +------+------------------------------------------------------------------+
+    | DL3  | Annual minimum of 7-day moving average flow. Compute the minimum |
+    |      | of a 7-day moving average flow for each year. DL3 cubic feet per |
+    |      | is the mean (or median) of these values. second—temporal         |
+    +------+------------------------------------------------------------------+
+    | DL4  | Annual minimum of 30-day moving average flow. Compute the        |
+    |      | minimum of a 30-day moving average flow for each year. cubic     |
+    |      | feet per DL4 is the mean (or median) of these values.            |
+    |      | second—temporal                                                  |
+    +------+------------------------------------------------------------------+
 
     Parameters
     ----------
@@ -1470,8 +1439,8 @@ def _indices_cli(
         [optional, default="A-SEP"]
 
         The water year to use for the calculation.  This uses the one of the
-        "A-..." Pandas offset codes.  The "A-SEP" code represents the very end of
-        September (the start of October) as the end of the water year.
+        "A-..." Pandas offset codes.  The "A-SEP" code represents the very end
+        of September (the start of October) as the end of the water year.
 
     use_median : bool
         [optional, default=False]
@@ -1730,13 +1699,14 @@ def indices(
             flow_component = [None]
 
         class_codes = []
-        for stream_class in stream_classification:
-            for flowc in flow_component:
-                if stream_class is not None:
-                    stream_class = stream_class.upper()
-                if flowc is not None:
-                    flowc = flowc.upper()
-                class_codes.extend(lu[(stream_class, flowc)])
+        for stream_class, flowc in itertools.product(
+            stream_classification, flow_component
+        ):
+            if stream_class is not None:
+                stream_class = stream_class.upper()
+            if flowc is not None:
+                flowc = flowc.upper()
+            class_codes.extend(lu[(stream_class, flowc)])
     else:
         class_codes = []
 
@@ -2088,11 +2058,7 @@ def exceedance_time(
     e_table = {}
     thresholds = [float(i) for i in thresholds]
     for flow, delay in zip(thresholds, delays):
-        if under_over == "over":
-            mask = series >= flow
-        else:
-            mask = series <= flow
-
+        mask = series >= flow if under_over == "over" else series <= flow
         accum = datetime.timedelta(days=0)
         duration = datetime.timedelta(days=0)
         first = True

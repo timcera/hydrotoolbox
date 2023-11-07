@@ -17,9 +17,9 @@ try:
     from pydantic import validate_call
 except ImportError:
     from pydantic import validate_arguments as validate_call
-from toolbox_utils import tsutils
 
 from .baseflow.separation import separation
+from .toolbox_utils.src.toolbox_utils import tsutils
 
 warnings.filterwarnings("ignore")
 
