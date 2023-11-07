@@ -14,7 +14,6 @@ readme = "README.rst"
 description = "Command line script and Python library for analysis of flow time-series."
 dependencies = [
     "cltoolbox >= 1.0.0",
-    "toolbox_utils >= 5.0.0, < 6.0.0",
     "pydantic"
 ]
 authors = [
@@ -112,7 +111,7 @@ readme = {file = "README.rst"}
 version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
-exclude = ["examples*", "tools*", "docs*", "hydrotoolbox.tests*"]
+exclude = ["tests*", "examples*", "tools*", "docs*", "hydrotoolbox.tests*"]
 where = ["src"]
 
 [tool.setuptools_scm]
