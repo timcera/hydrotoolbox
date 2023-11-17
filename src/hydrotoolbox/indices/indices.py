@@ -964,7 +964,7 @@ dimensionless—spatial"""
             allnp[group_name] = 0
             pdur = 0
             flag = 0
-            for index, value in group_df.iteritems():
+            for index, value in group_df.items():
                 if eval(f"value {than} thresh"):
                     pdur = pdur + 1
                     flag = flag + 1
