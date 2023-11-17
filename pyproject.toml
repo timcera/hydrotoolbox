@@ -14,6 +14,7 @@ readme = "README.rst"
 description = "Command line script and Python library for analysis of flow time-series."
 dependencies = [
     "cltoolbox >= 1.0.0",
+    "pandas",
     "pydantic"
 ]
 authors = [
