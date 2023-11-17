@@ -1,3 +1,14 @@
+## v2.0.9 (2023-11-17)
+
+### Fix
+
+- "var is True" is not the same as "var == True"
+- since working with a series must use items not iteritems
+
+### Refactor
+
+- small refactors for readability
+
 ## v2.0.8 (2023-08-08)
 
 ## v2.0.7 (2023-07-24)
