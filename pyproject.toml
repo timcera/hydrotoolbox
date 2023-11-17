@@ -15,7 +15,8 @@ description = "Command line script and Python library for analysis of flow time-
 dependencies = [
     "cltoolbox >= 1.0.0",
     "pandas",
-    "pydantic"
+    "pydantic",
+    "scipy"
 ]
 authors = [
     {name = "Tim Cera", email = "tim@cerazone.net"}
