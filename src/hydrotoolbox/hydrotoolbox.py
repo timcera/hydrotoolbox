@@ -1995,7 +1995,20 @@ def exceedance_time(
     input_ts="-",
     delays=0,
     under_over="over",
-    time_units: Literal["year", "month", "day", "hour", "min", "sec"] = "day",
+    time_units: Literal[
+        "year",
+        "month",
+        "day",
+        "hour",
+        "min",
+        "sec",
+        "years",
+        "months",
+        "days",
+        "hours",
+        "mins",
+        "secs",
+    ] = "day",
     columns=None,
     source_units=None,
     start_date=None,
@@ -2025,7 +2038,6 @@ def exceedance_time(
         source_units=source_units,
         target_units=target_units,
     )
-
     year = datetime.timedelta(days=365, hours=6, minutes=9, seconds=9)
     punits = {
         "year": year,
@@ -2034,6 +2046,12 @@ def exceedance_time(
         "hour": datetime.timedelta(hours=1),
         "min": datetime.timedelta(minutes=1),
         "sec": datetime.timedelta(seconds=1),
+        "years": year,
+        "months": year / 12,
+        "days": datetime.timedelta(days=1),
+        "hours": datetime.timedelta(hours=1),
+        "mins": datetime.timedelta(minutes=1),
+        "secs": datetime.timedelta(seconds=1),
     }.get(time_units, time_units)
 
     series = pd.Series(series.iloc[:, 0])
@@ -2062,29 +2080,33 @@ def exceedance_time(
         accum = datetime.timedelta(days=0)
         duration = datetime.timedelta(days=0)
         first = True
-        for index, value in mask.iteritems():
+        for index, value in mask.items():
             if pd.isna(value):
                 continue
             if first is True:
-                oindex = index
-                ovalue = value
+                previous_index = index
+                previous_value = value
                 first = False
                 continue
-            delta = index - oindex
-            if ovalue is True and value is True:
+            delta = index - previous_index
+            if previous_value == True and value == True:
                 accum += delta
-            elif ovalue is False and value is True:
+            elif previous_value == False and value == True:
                 accum += (
-                    (series[index] - flow) / (series[index] - series[oindex]) * delta
+                    (series[index] - flow)
+                    / (series[index] - series[previous_index])
+                    * delta
                 )
-            elif ovalue is True and value is False:
+            elif previous_value == True and value == False:
                 accum += (
-                    (series[oindex] - flow) / (series[oindex] - series[index]) * delta
+                    (series[previous_index] - flow)
+                    / (series[previous_index] - series[index])
+                    * delta
                 )
                 duration = duration + max(datetime.timedelta(days=0), accum - delay)
                 accum = datetime.timedelta(days=0)
-            oindex = index
-            ovalue = value
+            previous_index = index
+            previous_value = value
         duration = duration + max(datetime.timedelta(days=0), accum - delay)
         e_table[flow] = duration / punits
     return e_table
