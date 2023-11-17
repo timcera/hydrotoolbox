@@ -14,9 +14,15 @@ readme = "README.rst"
 description = "Command line script and Python library for analysis of flow time-series."
 dependencies = [
     "cltoolbox >= 1.0.0",
-    "pandas",
+    "dateparser",
+    "numpy",
+    "pandas[excel]",
+    "pint!=0.21.*",
+    "pint<0.22; python_version < '3.9'",
+    "pint-pandas",
     "pydantic",
-    "scipy"
+    "scipy",
+    "tabulate"
 ]
 authors = [
     {name = "Tim Cera", email = "tim@cerazone.net"}
