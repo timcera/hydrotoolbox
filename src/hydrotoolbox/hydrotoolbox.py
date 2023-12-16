@@ -1025,6 +1025,9 @@ def storm_events(
     target_units=None,
 ):
     """Find peak storm events."""
+    if rise_lag < 0 or fall_lag < 0:
+        raise ValueError("rise_lag and fall_lag must be greater than 0.")
+
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -1481,30 +1484,31 @@ def _indices_cli(
 
     ${tablefmt}
     """
+    ret = [
+        [key, val]
+        for key, val in (
+            indices(
+                indice_codes,
+                input_ts=input_ts,
+                water_year=water_year,
+                drainage_area=drainage_area,
+                use_median=use_median,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+            )
+        ).items()
+    ]
     tsutils.printiso(
-        [
-            [key, val]
-            for key, val in (
-                indices(
-                    indice_codes,
-                    input_ts=input_ts,
-                    water_year=water_year,
-                    drainage_area=drainage_area,
-                    use_median=use_median,
-                    columns=columns,
-                    source_units=source_units,
-                    start_date=start_date,
-                    end_date=end_date,
-                    dropna=dropna,
-                    clean=clean,
-                    round_index=round_index,
-                    skiprows=skiprows,
-                    index_type=index_type,
-                    names=names,
-                    target_units=target_units,
-                )
-            ).items()
-        ],
+        ret,
         tablefmt=tablefmt,
         headers=["Indices", "Value"],
         float_format=".3f",
@@ -1714,7 +1718,7 @@ def indices(
         "MA1": "Mean of all daily flows",
         "MA2": "Median of all daily flows",
         "MA3": "CV of all daily flows",
-        "MA4": "CV of  log of all daily flows",
+        "MA4": "CV of log of all daily flows",
         "MA5": "Mean daily flow/median daily flow",
         "MA6": "Q10/Q90 for all daily flows",
         "MA7": "Q20/Q80 for all daily flows",

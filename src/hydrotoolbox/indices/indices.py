@@ -39,8 +39,6 @@ class Indices:
         self.data_monthly_max = self.data_monthly.max()
         self.data_yearly_max = self.data_yearly.max()
 
-        self.log10data = np.log10(self.data)
-
     def MA1(self):
         """MA1
         Mean of the daily mean flow values for the entire flow record.
@@ -60,10 +58,8 @@ class Indices:
         for each year of daily flows. Compute the mean of the annual
         coefficients of variation.
         percent—temporal"""
-        tmpdata = (
-            self.data.groupby(pd.Grouper(freq=self.water_year)).std().mean()
-            / self.MA1()
-        )
+        group = self.data.groupby(pd.Grouper(freq=self.water_year))
+        tmpdata = group.std() / group.mean()
         if self.use_median is True:
             return tmpdata.median() * 100
         return tmpdata.mean() * 100
@@ -280,10 +276,8 @@ MA23 is the mean of all December flow values over the entire record
 
     def _make_MA_24_35(month: int):
         def template(self):
-            tmpdata = (
-                self.data.groupby(pd.Grouper(freq="M")).std()
-                / self.data.groupby(pd.Grouper(freq="M")).mean()
-            )
+            group = self.data.groupby(pd.Grouper(freq="M"))
+            tmpdata = group.std() / group.mean()
             if self.use_median is True:
                 return tmpdata[tmpdata.index.month == month].median() * 100
             return tmpdata[tmpdata.index.month == month].mean() * 100
@@ -1043,6 +1037,9 @@ dimensionless—spatial"""
         nnp, _, _ = self.event_statistics(thresh, ">")
         return nnp.median() if self.use_median is True else nnp.mean()
 
+    def FH11(self):
+        return None
+
     def DL1(self):
         stat = self.data_yearly.min()
         return stat.median() if self.use_median is True else stat.mean()
@@ -1126,7 +1123,11 @@ dimensionless—spatial"""
         stat = (
             self.data[self.data == 0].groupby(pd.Grouper(freq=self.water_year)).count()
         )
-        return stat.std() / stat.mean() * 100
+        ret = stat.std() / stat.mean() * 100
+        try:
+            return ret.fillna(0)
+        except AttributeError:
+            return 0 if isinstance(ret, type(pd.NA)) else ret
 
     def DL20(self):
         return self.data_monthly_mean[self.data_monthly_mean == 0].count()
@@ -1191,6 +1192,15 @@ dimensionless—spatial"""
         _, lfdur, _ = self.event_statistics(thresh, ">")
         return lfdur.median() if self.use_median else lfdur.mean()
 
+    def DH22(self):
+        return None
+
+    def DH23(self):
+        return None
+
+    def DH24(self):
+        return None
+
     def _pre_ta1_ta2(self):
         nrows = 11
         lq = self.data.apply(np.log10)
@@ -1247,6 +1257,9 @@ dimensionless—spatial"""
         nrows, _, HXY = self._pre_ta1_ta2()
         return 100 * (1 - (HXY / np.log10(nrows)))
 
+    def TA3(self):
+        return None
+
     def _min_max_doy(self, stat):
         if stat == "min":
             jd = (
@@ -1292,6 +1305,12 @@ dimensionless—spatial"""
         temp = np.sqrt(2 * (1 - temp))
         return temp * 180 / np.pi / 360 * 365.25
 
+    def TL3(self):
+        return None
+
+    def TL4(self):
+        return None
+
     def TH1(self):
         """TH1
         Julian date of annual maximum. Determine the Julian date of the maximum
@@ -1316,6 +1335,9 @@ dimensionless—spatial"""
         temp = np.sqrt(xbar * xbar + ybar * ybar)
         temp = np.sqrt(2 * (1 - temp))
         return temp * 180 / np.pi / 360 * 365.25
+
+    def TH3(self):
+        return None
 
     def _rise_rate(self):
         delt = self.data.shift(1) - self.data
@@ -1370,11 +1392,11 @@ dimensionless—spatial"""
 
     def RA8(self):
         df = self._changes()
-        return df.median() if self.use_median else df.mean()
+        return df.median()[0] if self.use_median else df.mean()[0]
 
     def RA9(self):
         df = self._changes()
-        return df.std() / df.mean() * 100
+        return (df.std() / df.mean())[0] * 100
 
 
 if __name__ == "__main__":
