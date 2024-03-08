@@ -7,7 +7,6 @@ hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
-
 from ..comparison import strict_baseflow
 
 

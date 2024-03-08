@@ -7,7 +7,6 @@ hydrotoolbox baseflow eckardt,sliding < daily.csv
 
 hydrotoolbox recession """
 
-
 import datetime
 import itertools
 import os.path
