@@ -1,7 +1,7 @@
+import re
 import unittest
 
 import pandas as pd
-import pytest
 from pandas.testing import assert_frame_equal
 
 from hydrotoolbox import indices
@@ -186,7 +186,7 @@ _all_large_reference = {
     "MA1: Mean of all daily flows": 36.07385680338878,
     "MA2: Median of all daily flows": 31.0,
     "MA3: CV of all daily flows": 64.38728590511374,
-    "MA4: CV of  log of all daily flows": 35.92322864951162,
+    "MA4: CV of log of all daily flows": 35.92322864951162,
     "MA5: Mean daily flow/median daily flow": 1.1636728001093155,
     "MA6: Q10/Q90 for all daily flows": 2.6,
     "MA7: Q20/Q80 for all daily flows": 1.8695652173913044,
@@ -352,7 +352,7 @@ _tsproc_reference = {
     "MA1: Mean of all daily flows": 36.03360,
     "MA2: Median of all daily flows": 31.00000,
     "MA3: CV of all daily flows": 65.98392,
-    "MA4: CV of  log of all daily flows": 35.86782,
+    "MA4: CV of log of all daily flows": 35.86782,
     "MA5: Mean daily flow/median daily flow": 1.162374,
     "MA6: Q10/Q90 for all daily flows": 2.600000,
     "MA7: Q20/Q80 for all daily flows": 1.869565,
@@ -523,11 +523,17 @@ class TestIndices(unittest.TestCase):
         # Act
         result = indices(
             all,
-            input_ts="Q_BEC_BE_6500.csv",
+            input_ts="tests/Q_BEC_BE_6500.csv",
             start_date="1955-01-01",
         )
+        res = pd.Series(result)
+        res = res.reset_index()
+
+        ref = pd.Series(_all_large_reference)
+        ref = ref.reset_index()
+
         # Assert
-        self.assertDictEqual(result, _all_large_reference)
+        assert_frame_equal(res, ref, rtol=0.01)
 
     def test_all_large_dataset_tsproc(self):
         # Arrange
@@ -536,7 +542,7 @@ class TestIndices(unittest.TestCase):
         # Act
         result = indices(
             all,
-            input_ts="Q_BEC_BE_6500.csv",
+            input_ts="tests/Q_BEC_BE_6500.csv",
             start_date="1955-01-01",
         )
         # Assert

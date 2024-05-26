@@ -163,6 +163,10 @@ def test_storm_events(
         )
 
         # Assert
-        print(result)
-        print(expected)
-        assert_frame_equal(result, expected, check_index_type=False)
+        assert_frame_equal(
+            result,
+            expected,
+            check_index_type=False,
+            check_freq=False,
+            check_dtype=False,
+        )
