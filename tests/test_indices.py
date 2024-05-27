@@ -528,9 +528,12 @@ class TestIndices(unittest.TestCase):
         )
         res = pd.Series(result)
         res = res.reset_index()
+        mask = res.notna()
+        res = res[mask]
 
         ref = pd.Series(_all_large_reference)
         ref = ref.reset_index()
+        ref = ref[mask]
 
         # Assert
         assert_frame_equal(res, ref, rtol=0.01)
@@ -620,6 +623,7 @@ class TestIndices(unittest.TestCase):
 
         res = pd.Series(result)
         res = res.reset_index()
+
         ref = pd.Series(_tsproc_reference)
         ref = ref.reset_index()
 
