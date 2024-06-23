@@ -65,7 +65,7 @@ def recession_period(Q):
     return multi_arange(idx_beg, idx_end)
 
 
-def maxmium_BFI(Q, b_LH, a, date=None):
+def maximum_BFI(Q, b_LH, a, date=None):
     b = Backward(Q, b_LH, a)
 
     if date is None:

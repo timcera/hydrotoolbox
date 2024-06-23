@@ -1,7 +1,27 @@
 import numpy as np
 
 from .comparison import KGE, strict_baseflow
-from .methods import *
+from .methods import (
+    CM,
+    EWMA,
+    LH,
+    UKIH,
+    Boughton,
+    Chapman,
+    Eckhardt,
+    Fixed,
+    Furey,
+    Local,
+    Slide,
+    Willems,
+    f_Boughton,
+    f_Eckhardt,
+    f_Furey,
+    f_Willems,
+    five_day,
+    ihacres,
+    strict,
+)
 from .param_estimate import param_calibrate, recession_coefficient
 
 

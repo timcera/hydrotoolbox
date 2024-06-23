@@ -924,7 +924,7 @@ dimensionless—spatial"""
                 medm = self.MA2() * med_mult
 
             peaks, _ = find_peaks(self.data, height=medm)
-            return self.data[peaks].mean() / self.MA2()
+            return self.data.iloc[peaks].mean() / self.MA2()
 
         return template
 
@@ -1273,7 +1273,8 @@ dimensionless—spatial"""
                 .idxmax()
                 .dt.dayofyear
             )
-        jd[jd > 365.25] = jd[jd > 365.25] - 365.25
+        mask = jd > 365.25
+        jd.loc[mask] = jd.loc[mask] - 365.25
         jd = jd * 2 * np.pi / 365.25
         xbar = np.cos(jd).mean()
         ybar = np.sin(jd).mean()
@@ -1385,7 +1386,7 @@ dimensionless—spatial"""
         peaks = find_peaks(self.data)[0]
         valleys = find_peaks(-self.data)[0]
         changes = np.append(peaks, valleys)
-        changes = pd.DataFrame(self.data[changes])
+        changes = pd.DataFrame(self.data.iloc[changes])
         df = pd.DataFrame(range(len(changes.index)), index=changes.index)
         df = df.groupby(pd.Grouper(freq=self.water_year)).count()
         return df

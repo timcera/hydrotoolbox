@@ -5,7 +5,7 @@ hydrotoolbox baseflow_sep sliding < daily.csv
 hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
 ...
 
-hydrotoolbox recession """
+hydrotoolbox recession"""
 
 import logging
 import warnings
@@ -23,9 +23,7 @@ from .toolbox_utils.src.toolbox_utils import tsutils
 
 warnings.filterwarnings("ignore")
 
-tsutils.docstrings[
-    "area"
-] = """area: float
+tsutils.docstrings["area"] = """area: float
         [optional, default is None, where N is then set to 5 days]
 
         Basin area in km^2.

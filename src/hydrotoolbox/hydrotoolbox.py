@@ -5,7 +5,7 @@ hydrotoolbox baseflow sliding < daily.csv
 hydrotoolbox baseflow eckardt,sliding < daily.csv
 ...
 
-hydrotoolbox recession """
+hydrotoolbox recession"""
 
 import datetime
 import itertools
@@ -2092,15 +2092,15 @@ def exceedance_time(
                 first = False
                 continue
             delta = index - previous_index
-            if previous_value == True and value == True:
+            if bool(previous_value) is True and bool(value) is True:
                 accum += delta
-            elif previous_value == False and value == True:
+            elif bool(previous_value) is False and bool(value) is True:
                 accum += (
                     (series[index] - flow)
                     / (series[index] - series[previous_index])
                     * delta
                 )
-            elif previous_value == True and value == False:
+            elif bool(previous_value) is True and bool(value) is False:
                 accum += (
                     (series[previous_index] - flow)
                     / (series[previous_index] - series[index])

@@ -3,8 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = [
     "setuptools>=45",
     "setuptools_scm[toml]>=6.2",
-    "wheel",
-    "oldest-supported-numpy"
+    "wheel"
 ]
 
 [project]
@@ -56,34 +55,6 @@ keywords = [
 license = {text = "BSD-3-Clause"}
 requires-python = ">=3.8"
 
-[project.optional-dependencies]
-dev = [
-    "bandit",
-    "black",
-    "blacken-docs",
-    "black-nbconvert",
-    "cleanpy",
-    "commitizen",
-    "coverage[toml]",
-    "isort",
-    "mypy",
-    "pre-commit",
-    "pyflakes",
-    "pylama",
-    "pyle",
-    "pylint",
-    "pyre",
-    "pyroma",
-    "pytest",
-    "pytest-cov",
-    "pytest-mpl",
-    "pyupgrade",
-    "twine",
-    "unimport",
-    "velin",
-    "vulture"
-]
-
 [project.scripts]
 hydrotoolbox = "hydrotoolbox.hydrotoolbox:main"
 
@@ -91,14 +62,6 @@ hydrotoolbox = "hydrotoolbox.hydrotoolbox:main"
 documentation = "https://timcera.bitbucket.io/hydrotoolbox/docs/index.html#hydrotoolbox-documentation"
 github = "https://github.com/timcera/hydrotoolbox"
 bitbucket = "https://bitbucket.org/timcera/hydrotoolbox/src/main/"
-
-[tool.check-manifest]
-ignore = [
-    "docs/_function_autosummary/*",
-    ".coverage",
-    ".deepsource.toml",
-    ".ipynb_checkpoints/*"
-]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -110,6 +73,9 @@ version_files = ["VERSION"]
 [tool.isort]
 profile = "black"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
 include-package-data = true
@@ -119,7 +85,6 @@ readme = {file = "README.rst"}
 version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
-exclude = ["tests*", "examples*", "tools*", "docs*", "hydrotoolbox.tests*"]
 where = ["src"]
 
 [tool.setuptools_scm]
