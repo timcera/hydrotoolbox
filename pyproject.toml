@@ -14,7 +14,7 @@ description = "Command line script and Python library for analysis of flow time-
 dependencies = [
     "cltoolbox >= 1.0.0",
     "dateparser",
-    "numpy",
+    "numpy <2.0; python_version == '3.9'",
     "pandas[excel]",
     "pint!=0.21.*",
     "pint<0.22; python_version < '3.9'",
