@@ -1,3 +1,9 @@
+## v2.0.11 (2024-06-24)
+
+### Fix
+
+- fixed exceedance_time function where numpy.bool was not treated as a bool
+
 ## v2.0.10 (2024-03-31)
 
 ## v2.0.9 (2023-11-17)
