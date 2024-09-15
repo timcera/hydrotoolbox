@@ -126,7 +126,7 @@ def test_exceedance_time(
     expected,
 ):
     # Arrange
-    if expected == ValueError:
+    if expected is ValueError:
         # Assert
         with pytest.raises(ValueError):
             # Act

@@ -74,7 +74,7 @@ class Indices:
         entire flow record.
 
         Percentiles are computed by interpolating between the ordered
-        (ascending) logs of the flow values. Compute the standard    deviation
+        (ascending) logs of the flow values. Compute the standard deviation
         and mean for the percentile values. Divide the standard deviation by
         the mean.
         percent–spatial"""
