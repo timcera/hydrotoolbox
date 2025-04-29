@@ -16,8 +16,8 @@ Table of Contents
    :maxdepth: 2
 
    readme
-   command_line
    function_summary
+   command_line
    contributing
    authors
    license

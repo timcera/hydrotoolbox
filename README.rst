@@ -52,23 +52,53 @@ conda
 
     conda install -c conda-forge hydrotoolbox
 
+Usage - API
+-----------
+All functions return a PANDAS DataFrame.  Input can be a CSV or TAB separated
+file, or a PANDAS DataFrame and is supplied to the function via the 'input_ts'
+keyword.
+
+Simply import hydrotoolbox::
+
+    from hydrotoolbox import hydrotoolbox
+
+    # Then you could call the functions
+    ntsd = hydrotoolbox.baseflow_sep(method='boughton', input_ts='tests/test_fill_01.csv')
 
 Usage - Command Line
 --------------------
-Just run 'hydrotoolbox --help' to get a list of subcommands::
+All functions are available from the command line.  The command line
+interface is a wrapper around the functions in the hydrotoolbox module.  The
+command line arguments match one-to-one with the function arguments.
 
+To get help for the command line interface, run::
 
-    usage: hydrotoolbox [-h] [-v] {baseflow_sep,recession,about} ...
+    hydrotoolbox --help
+
+Which gives you the following output::
+
+    usage: hydrotoolbox [-h] [-v]
+                        {baseflow_sep, recession, flow_duration, storm_events,
+                        indices, exceedance_time, about} ...
 
     positional arguments:
-      {baseflow_sep,recession,about}
+      {baseflow_sep,recession,flow_duration,storm_events,indices,exceedance_time,about}
         baseflow_sep        baseflow_sep subcommand
         recession           Recession coefficient.
+        flow_duration       Flow duration.
+        storm_events        Storm events.
+        indices             Calculate hydrologic indices.
+        exceedance_time     Calculate the time that a time series exceeds (or is
+                            below) a threshold.
         about               Display version number and system information.
 
-    optional arguments:
+    options:
       -h, --help            show this help message and exit
       -v, --version         show program's version number and exit
+
+To get help for a specific subcommand, run::
+
+    hydrotoolbox <subcommand> --help
 
 The default for all of the subcommands is to accept data from stdin (typically
 a pipe).  If a subcommand accepts an input file for an argument, you can use
@@ -77,17 +107,3 @@ default) "--input_ts='-'".
 
 For the subcommands that output data it is printed to the screen and you can
 then redirect to a file.
-
-Usage - API
------------
-You can use all of the command line subcommands as functions.  The function
-signature is identical to the command line subcommands.  The return is always
-a PANDAS DataFrame.  Input can be a CSV or TAB separated file, or a PANDAS
-DataFrame and is supplied to the function via the 'input_ts' keyword.
-
-Simply import hydrotoolbox::
-
-    from hydrotoolbox import hydrotoolbox
-
-    # Then you could call the functions
-    ntsd = hydrotoolbox.baseflow_sep(method='broughton', input_ts='tests/test_fill_01.csv')

@@ -6,7 +6,7 @@ from pandas.testing import assert_frame_equal
 
 from hydrotoolbox import hydrotoolbox
 
-# This stupid thing is needed to that linters don't remove the hydrotoolbox
+# This stupid thing is needed so that linters don't remove the hydrotoolbox
 # import.
 ht = hydrotoolbox
 
