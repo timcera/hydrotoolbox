@@ -43,8 +43,9 @@ def param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth):
     loss = np.zeros(param_range.shape)
     for i in range(param_range.shape[0]):
         p = param_range[i]
-        b_exceed = method(Q, b_LH, p, return_exceed=True)
-        f_exd, logb = b_exceed[-1] / Q.shape[0], np.log(b_exceed[:-1] + 1)
+        b_exceed, num_exceed = method(Q, b_LH, p)
+        f_exd = num_exceed / Q.shape[0]
+        logb = np.log(b_exceed + 1)
         NSE_rec = NSE(log_q[idx_rec], logb[idx_rec])
         NSE_oth = NSE(log_q[idx_oth], logb[idx_oth])
         loss[i] = 1 - (1 - (1 - NSE_rec) / (1 - NSE_oth)) * (1 - f_exd)

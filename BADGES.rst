@@ -18,11 +18,6 @@
     :target: https://pypi.python.org/pypi/hydrotoolbox/
     :height: 20
 
-.. image:: https://img.shields.io/pypi/dd/hydrotoolbox.svg
-    :alt: hydrotoolbox downloads
-    :target: https://pypi.python.org/pypi/hydrotoolbox/
-    :height: 20
-
 .. image:: https://img.shields.io/pypi/pyversions/hydrotoolbox
     :alt: PyPI - Python Version
     :target: https://pypi.org/project/hydrotoolbox/

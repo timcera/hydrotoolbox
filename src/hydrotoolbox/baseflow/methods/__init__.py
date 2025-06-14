@@ -1,37 +1,37 @@
 __all__ = [
-    "Boughton",
-    "Chapman",
-    "CM",
-    "Eckhardt",
-    "EWMA",
+    "boughton",
+    "chapman",
+    "cm",
+    "eckhardt",
+    "ewma",
     "five_day",
-    "Fixed",
-    "Furey",
+    "fixed",
+    "furey",
     "ihacres",
-    "LH",
-    "Local",
-    "Slide",
+    "lh",
+    "local",
+    "slide",
     "strict",
-    "UKIH",
-    "Willems",
+    "ukih",
+    "willems",
     "f_Boughton",
     "f_Eckhardt",
     "f_Furey",
     "f_Willems",
 ]
 
-from .Boughton import Boughton, f_Boughton
-from .Chapman import Chapman
-from .CM import CM
-from .Eckhardt import Eckhardt, f_Eckhardt
-from .EWMA import EWMA
+from .boughton import boughton, f_Boughton
+from .chapman import chapman
+from .cm import cm
+from .eckhardt import eckhardt, f_Eckhardt
+from .ewma import ewma
 from .five_day import five_day
-from .Fixed import Fixed
-from .Furey import Furey, f_Furey
+from .fixed import fixed
+from .furey import f_Furey, furey
 from .ihacres import ihacres
-from .LH import LH
-from .Local import Local
-from .Slide import Slide
+from .lh import lh
+from .local import local
+from .slide import slide
 from .strict import strict
-from .UKIH import UKIH
-from .Willems import Willems, f_Willems
+from .ukih import ukih
+from .willems import f_Willems, willems

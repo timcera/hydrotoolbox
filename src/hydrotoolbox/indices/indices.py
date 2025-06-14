@@ -8,7 +8,7 @@ from ..toolbox_utils.src.toolbox_utils import tsutils
 
 
 class Indices:
-    def __init__(self, data, use_median=False, water_year="A-SEP", drainage_area=1):
+    def __init__(self, data, use_median=False, water_year="YE-SEP", drainage_area=1):
         if isinstance(data, pd.DataFrame) and len(data.columns) != 1:
             raise ValueError(
                 tsutils.error_wrapper(
@@ -20,14 +20,16 @@ class Indices:
             )
 
         self.use_median = use_median
-        self.water_year = water_year
+        self.water_year = tsutils.pandas_offset_by_version(water_year)
         self.drainage_area = float(drainage_area)
 
         self.data = pd.Series(data.iloc[:, 0].values, index=data.index)
         self.data[self.data < 0] = pd.NA
         self.data = self.data.dropna()
 
-        self.data_monthly = self.data.groupby(pd.Grouper(freq="M"))
+        self.data_monthly = self.data.groupby(
+            pd.Grouper(freq=tsutils.pandas_offset_by_version("ME"))
+        )
         self.data_yearly = self.data.groupby(pd.Grouper(freq=self.water_year))
 
         self.data_monthly_mean = self.data_monthly.mean()
@@ -276,7 +278,9 @@ MA23 is the mean of all December flow values over the entire record
 
     def _make_MA_24_35(month: int):
         def template(self):
-            group = self.data.groupby(pd.Grouper(freq="M"))
+            group = self.data.groupby(
+                pd.Grouper(freq=tsutils.pandas_offset_by_version("ME"))
+            )
             tmpdata = group.std() / group.mean()
             if self.use_median is True:
                 return tmpdata[tmpdata.index.month == month].median() * 100

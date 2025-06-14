@@ -2,7 +2,7 @@
 
 hydrotoolbox baseflow_sep --area 59.1 --area_units 'mile**2' linear < daily.csv
 hydrotoolbox baseflow_sep sliding < daily.csv
-hydrotoolbox baseflow_sep eckardt,sliding < daily.csv
+hydrotoolbox baseflow_sep eckhardt,sliding < daily.csv
 ...
 
 hydrotoolbox recession"""

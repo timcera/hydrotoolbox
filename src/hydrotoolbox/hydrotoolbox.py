@@ -1,8 +1,9 @@
-"""Tools for hydrology.
+"""
+Tools for hydrology.
 
 hydrotoolbox baseflow --area 59.1 --area_units 'mile**2' linear < daily.csv
 hydrotoolbox baseflow sliding < daily.csv
-hydrotoolbox baseflow eckardt,sliding < daily.csv
+hydrotoolbox baseflow eckhardt,sliding < daily.csv
 ...
 
 hydrotoolbox recession"""
@@ -92,6 +93,7 @@ def _boughton_cli(
 @program.baseflow_sep.command("chapman", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.chapman)
 def _chapman_cli(
+    k=None,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -107,10 +109,12 @@ def _chapman_cli(
     print_input=False,
     tablefmt="csv",
 ):
-    """Chapman filter (Chapman, 1991)
+    """
+    Chapman filter (Chapman, 1991)
 
     Parameters
     ----------
+    {k}
     input_ts
         Streamflow
     ${columns}
@@ -129,6 +133,7 @@ def _chapman_cli(
     """
     tsutils.printiso(
         baseflow_sep.chapman(
+            k=k,
             input_ts=input_ts,
             columns=columns,
             source_units=source_units,
@@ -150,6 +155,7 @@ def _chapman_cli(
 @program.baseflow_sep.command("cm", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.cm)
 def _cm_cli(
+    k=None,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -168,6 +174,7 @@ def _cm_cli(
     """CM filter (Chapman and Maxwell, 1996)"""
     tsutils.printiso(
         baseflow_sep.cm(
+            k=k,
             input_ts=input_ts,
             columns=columns,
             source_units=source_units,
@@ -191,6 +198,8 @@ def _cm_cli(
 def _eckhardt_cli(
     input_ts="-",
     columns=None,
+    k=None,
+    bfi_max=None,
     source_units=None,
     start_date=None,
     end_date=None,
@@ -204,7 +213,8 @@ def _eckhardt_cli(
     print_input=False,
     tablefmt="csv",
 ):
-    """Eckhardt filter (Eckhardt, 2005)
+    """
+    Eckhardt filter (Eckhardt, 2005)
 
     Parameters
     ----------
@@ -228,6 +238,8 @@ def _eckhardt_cli(
         baseflow_sep.eckhardt(
             input_ts=input_ts,
             columns=columns,
+            k=k,
+            bfi_max=bfi_max,
             source_units=source_units,
             start_date=start_date,
             end_date=end_date,
@@ -323,6 +335,8 @@ def _five_day_cli(
 @program.baseflow_sep.command("furey", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.furey)
 def _furey_cli(
+    k=None,
+    c3c1=None,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -340,6 +354,8 @@ def _furey_cli(
 ):
     tsutils.printiso(
         baseflow_sep.furey(
+            k=k,
+            c3c1=c3c1,
             input_ts=input_ts,
             columns=columns,
             source_units=source_units,
@@ -361,6 +377,7 @@ def _furey_cli(
 @program.baseflow_sep.command("lh", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.lh)
 def _lh_cli(
+    alpha=0.925,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -378,6 +395,7 @@ def _lh_cli(
 ):
     tsutils.printiso(
         baseflow_sep.lh(
+            alpha=alpha,
             input_ts=input_ts,
             columns=columns,
             source_units=source_units,
@@ -519,6 +537,7 @@ def _willems_cli(
 @program.baseflow_sep.command("usgs_hysep_fixed", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_fixed)
 def _usgs_hysep_fixed_cli(
+    num_days=None,
     area=None,
     input_ts="-",
     columns=None,
@@ -537,6 +556,7 @@ def _usgs_hysep_fixed_cli(
 ):
     tsutils.printiso(
         baseflow_sep.usgs_hysep_fixed(
+            num_days=num_days,
             area=area,
             input_ts=input_ts,
             columns=columns,
@@ -559,6 +579,7 @@ def _usgs_hysep_fixed_cli(
 @program.baseflow_sep.command("usgs_hysep_local", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_local)
 def _usgs_hysep_local_cli(
+    num_days=None,
     area=None,
     input_ts="-",
     columns=None,
@@ -577,6 +598,7 @@ def _usgs_hysep_local_cli(
 ):
     tsutils.printiso(
         baseflow_sep.usgs_hysep_local(
+            num_days=num_days,
             area=area,
             input_ts=input_ts,
             columns=columns,
@@ -599,6 +621,7 @@ def _usgs_hysep_local_cli(
 @program.baseflow_sep.command("usgs_hysep_slide", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.usgs_hysep_slide)
 def _usgs_hysep_slide_cli(
+    num_days=None,
     area=None,
     input_ts="-",
     columns=None,
@@ -617,6 +640,7 @@ def _usgs_hysep_slide_cli(
 ):
     tsutils.printiso(
         baseflow_sep.usgs_hysep_slide(
+            num_days=num_days,
             area=area,
             input_ts=input_ts,
             columns=columns,
@@ -636,61 +660,62 @@ def _usgs_hysep_slide_cli(
     )
 
 
-@program.baseflow_sep.command("strict", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.strict)
-def _strict_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    """Return "strict" baseflow.
-
-    Parameters
-    ----------
-    ${input_ts}
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    tsutils.printiso(
-        baseflow_sep.strict(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
+# @program.baseflow_sep.command("strict", formatter_class=RSTHelpFormatter)
+# @tsutils.copy_doc(baseflow_sep.strict)
+# def _strict_cli(
+#     input_ts="-",
+#     columns=None,
+#     source_units=None,
+#     start_date=None,
+#     end_date=None,
+#     dropna="no",
+#     clean=False,
+#     round_index=None,
+#     skiprows=None,
+#     index_type="datetime",
+#     names=None,
+#     target_units=None,
+#     print_input=False,
+#     tablefmt="csv",
+# ):
+#     """
+#     Return "strict" baseflow.
+#
+#     Parameters
+#     ----------
+#     ${input_ts}
+#     ${columns}
+#     ${source_units}
+#     ${start_date}
+#     ${end_date}
+#     ${dropna}
+#     ${clean}
+#     ${round_index}
+#     ${skiprows}
+#     ${index_type}
+#     ${names}
+#     ${target_units}
+#     ${print_input}
+#     ${tablefmt}
+#     """
+#     tsutils.printiso(
+#         baseflow_sep.strict(
+#             input_ts=input_ts,
+#             columns=columns,
+#             source_units=source_units,
+#             start_date=start_date,
+#             end_date=end_date,
+#             dropna=dropna,
+#             clean=clean,
+#             round_index=round_index,
+#             skiprows=skiprows,
+#             index_type=index_type,
+#             names=names,
+#             target_units=target_units,
+#             print_input=print_input,
+#         ),
+#         tablefmt=tablefmt,
+#     )
 
 
 def recession(
@@ -752,7 +777,8 @@ def _recession_cli(
     target_units=None,
     tablefmt="plain",
 ):
-    """Recession coefficient.
+    """
+    Recession coefficient.
 
     Parameters
     ----------
@@ -814,39 +840,27 @@ def _flow_duration_cli(
     target_units=None,
     tablefmt="csv",
 ):
-    """Flow duration.
+    """
+    Flow duration.
 
     Parameters
     ----------
     ${input_ts}
-
     exceedance_probabilities
         [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
 
         Exceedance probabilities
-
     ${columns}
-
     ${source_units}
-
     ${start_date}
-
     ${end_date}
-
     ${dropna}
-
     ${clean}
-
     ${round_index}
-
     ${skiprows}
-
     ${index_type}
-
     ${names}
-
     ${target_units}
-
     ${tablefmt}
     """
     tsutils.printiso(
@@ -931,54 +945,39 @@ def _storm_events_cli(
     target_units=None,
     tablefmt="plain",
 ):
-    """Storm events.
+    """
+    Storm events.
 
     Parameters
     ----------
     rise_lag : int
         Sets the number of time-series terms to include from the rising limb of
         the hydrograph.
-
     fall_lag : int
         Sets the number of time-series terms to include from the falling limb of
         the hydrograph. window=1
-
     min_peak : int, float
         [optional, default=0]
 
         All detected storm peaks in the hydrograph must be greater than
         `min_peak`.
-
     window : int
         [optional, default=1]
 
         Adjacent peaks can not be within `window` time-series terms of each
         other.
-
     ${input_ts}
-
     ${columns}
-
     ${source_units}
-
     ${start_date}
-
     ${end_date}
-
     ${dropna}
-
     ${clean}
-
     ${round_index}
-
     ${skiprows}
-
     ${index_type}
-
     ${names}
-
     ${target_units}
-
     ${tablefmt}
     """
     tsutils.printiso(
@@ -1063,7 +1062,7 @@ def storm_events(
 @tsutils.doc(tsutils.docstrings)
 def _indices_cli(
     indice_codes,
-    water_year="A-SEP",
+    water_year="YE-SEP",
     drainage_area=1,
     use_median=False,
     input_ts="-",
@@ -1080,7 +1079,8 @@ def _indices_cli(
     target_units=None,
     tablefmt="plain",
 ):
-    """Calculate hydrologic indices.
+    """
+    Calculate hydrologic indices.
 
     +------+------------------------------------------------------------------+
     | Code | Description                                                      |
@@ -1436,51 +1436,34 @@ def _indices_cli(
 
         The hydrologic indice codes are taken as is, but the collected stream
         classifications are intersected with the flow regime indices.
-
     water_year
-        [optional, default="A-SEP"]
+        [optional, default="YE-SEP"]
 
         The water year to use for the calculation.  This uses the one of the
-        "A-..." Pandas offset codes.  The "A-SEP" code represents the very end
+        "A-..." Pandas offset codes.  The "YE-SEP" code represents the very end
         of September (the start of October) as the end of the water year.
-
     use_median : bool
         [optional, default=False]
 
         If True, use the median instead of the mean for the calculations.
-
     drainage_area
         [optional, default=1]
 
         The drainage area to use for the calculations.  This is the drainage
         area in square miles.
-
     ${input_ts}
-
     ${columns}
-
     ${source_units}
-
     ${start_date}
-
     ${end_date}
-
     ${dropna}
-
     ${clean}
-
     ${round_index}
-
     ${skiprows}
-
     ${index_type}
-
     ${names}
-
     ${target_units}
-
     ${print_input}
-
     ${tablefmt}
     """
     ret = [
@@ -1518,7 +1501,7 @@ def _indices_cli(
 def indices(
     *indice_codes,
     input_ts="-",
-    water_year="A-SEP",
+    water_year="YE-SEP",
     drainage_area=1,
     use_median=False,
     columns=None,
@@ -1913,57 +1896,40 @@ def _exceedance_time_cli(
     target_units=None,
     *thresholds,
 ):
-    """Calculate the time that a time series exceeds (or is below) a threshold.
-
+    """
     Calculate the time that a time series exceeds (or is below) a threshold.
 
     Parameters
     ----------
     *thresholds : list
         List of thresholds to calculate exceedance for.
-
     ${input_ts}
-
     delays : list
         [optional, default 0]
 
         List of delays to calculate exceedance for.  This can be an empty list
         in which case the delays are all 0.  If one delay is given, then each
         flow requires a delay term.
-
     under_over : str
         [optional, default "over"]
 
         Whether to calculate exceedance or under-exceedance.
-
     time_units : str
         [optional, default "day"]
 
         Units for the delays and the returned exceedance time.  Can be any
         of the following strings: "year", "month", "day", "hour", "min", or "sec".
-
     ${columns}
-
     ${source_units}
-
     ${start_date}
-
     ${end_date}
-
     ${dropna}
-
     ${clean}
-
     ${round_index}
-
     ${skiprows}
-
     ${index_type}
-
     ${names}
-
     ${target_units}
-
     ${print_input}
     """
     ans = exceedance_time(
@@ -2092,15 +2058,15 @@ def exceedance_time(
                 first = False
                 continue
             delta = index - previous_index
-            if bool(previous_value) is True and bool(value) is True:
+            if bool(previous_value) and bool(value):
                 accum += delta
-            elif bool(previous_value) is False and bool(value) is True:
+            elif not bool(previous_value) and bool(value):
                 accum += (
                     (series[index] - flow)
                     / (series[index] - series[previous_index])
                     * delta
                 )
-            elif bool(previous_value) is True and bool(value) is False:
+            elif bool(previous_value) and not bool(value):
                 accum += (
                     (series[previous_index] - flow)
                     / (series[previous_index] - series[index])
