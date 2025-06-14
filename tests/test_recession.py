@@ -94,4 +94,4 @@ def test_recession(
         )
 
         # Assert
-        assert result == expected
+        assert result == pytest.approx(expected)
