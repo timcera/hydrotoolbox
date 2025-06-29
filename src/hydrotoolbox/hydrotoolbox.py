@@ -377,8 +377,8 @@ def _furey_cli(
 @program.baseflow_sep.command("lh", formatter_class=RSTHelpFormatter)
 @tsutils.copy_doc(baseflow_sep.lh)
 def _lh_cli(
-    alpha=0.925,
     input_ts="-",
+    alpha=0.925,
     columns=None,
     source_units=None,
     start_date=None,
@@ -395,8 +395,8 @@ def _lh_cli(
 ):
     tsutils.printiso(
         baseflow_sep.lh(
-            alpha=alpha,
             input_ts=input_ts,
+            alpha=alpha,
             columns=columns,
             source_units=source_units,
             start_date=start_date,

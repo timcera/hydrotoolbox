@@ -626,8 +626,8 @@ def furey(
 
 @tsutils.doc(tsutils.docstrings)
 def lh(
-    alpha=0.925,
     input_ts="-",
+    alpha=0.925,
     columns=None,
     source_units=None,
     start_date=None,
