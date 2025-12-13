@@ -14,7 +14,7 @@ description = "Command line script and Python library for analysis of flow time-
 dependencies = [
     "cltoolbox >= 1.0.0",
     "dateparser",
-    "numpy <2.0; python_version == '3.9'",
+    "numpy",
     "pandas[excel]",
     "pint!=0.21.*",
     "pint-pandas",
@@ -35,11 +35,11 @@ classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules"
@@ -53,7 +53,7 @@ keywords = [
     "hydrographic"
 ]
 license = {text = "BSD-3-Clause"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.scripts]
 hydrotoolbox = "hydrotoolbox.hydrotoolbox:main"
