@@ -38,6 +38,8 @@ jobs:
                       numpy-versions: numpy<2.0.0
                     - python-versions: '3.14'
                       numpy-versions: numpy<2.0.0
+                    - pandas-versions: pandas<2.0.0
+                      numpy-versions: numpy>=2.0.0
 
         steps:
             - name: Checkout repository
