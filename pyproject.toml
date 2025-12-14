@@ -40,7 +40,7 @@ dependencies = [
     "tabulate"
 ]
 description = "Command line script and Python library for analysis of flow time-series."
-dynamic = ["version"]
+dynamic = ["readme", "version"]
 keywords = [
     "baseflow",
     "cli-app",
@@ -51,7 +51,6 @@ keywords = [
 ]
 license = {text = "BSD-3-Clause"}
 name = "hydrotoolbox"
-readme = "README.rst"
 requires-python = ">=3.10"
 
 [project.scripts]
