@@ -1,36 +1,20 @@
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-    "setuptools>=45",
-    "setuptools_scm[toml]>=6.2",
-    "wheel"
+    "setuptools-scm[simple]>=8",
+    "setuptools>=80"
 ]
 
 [project]
-name = "hydrotoolbox"
-dynamic = ["version"]
-readme = "README.rst"
-description = "Command line script and Python library for analysis of flow time-series."
-dependencies = [
-    "cltoolbox >= 1.0.0",
-    "dateparser",
-    "numpy",
-    "pandas[excel]",
-    "pint!=0.21.*",
-    "pint-pandas",
-    "pydantic",
-    "scipy",
-    "tabulate"
-]
 authors = [
-    {name = "Tim Cera", email = "tim@cerazone.net"}
+    {email = "tim@cerazone.net", name = "Tim Cera"}
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "Intended Audience :: End Users/Desktop",
-    "Intended Audience :: Developers",
     "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
@@ -43,25 +27,40 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules"
+] # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+dependencies = [
+    "cltoolbox >= 1.0.0",
+    "dateparser",
+    "numpy",
+    "pandas[excel]",
+    "pint!=0.21.*",
+    "pint-pandas",
+    "pydantic",
+    "scipy",
+    "tabulate"
 ]
+description = "Command line script and Python library for analysis of flow time-series."
+dynamic = ["version"]
 keywords = [
-    "time-series",
-    "cli-app",
-    "hydrology",
     "baseflow",
+    "cli-app",
     "hydrograph-recession",
-    "hydrographic"
+    "hydrographic",
+    "hydrology",
+    "time-series"
 ]
 license = {text = "BSD-3-Clause"}
+name = "hydrotoolbox"
+readme = "README.rst"
 requires-python = ">=3.10"
 
 [project.scripts]
 hydrotoolbox = "hydrotoolbox.hydrotoolbox:main"
 
 [project.urls]
+bitbucket = "https://bitbucket.org/timcera/hydrotoolbox/src/main/"
 documentation = "https://timcera.bitbucket.io/hydrotoolbox/docs/index.html#hydrotoolbox-documentation"
 github = "https://github.com/timcera/hydrotoolbox"
-bitbucket = "https://bitbucket.org/timcera/hydrotoolbox/src/main/"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -77,8 +76,8 @@ profile = "black"
 testpaths = ["tests"]
 
 [tool.setuptools]
-license-files = ["LICENSE.txt"]
 include-package-data = true
+license-files = ["LICENSE.txt"]
 
 [tool.setuptools.dynamic]
 readme = {file = "README.rst"}
@@ -86,5 +85,3 @@ version = {file = "VERSION"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools_scm]
