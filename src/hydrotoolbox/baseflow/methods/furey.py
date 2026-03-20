@@ -1,25 +1,17 @@
 import numpy as np
 
 
-def furey(Q, b_LH, k, c3c1):
-    """Furey digital filter (Furey & Gupta, 2001, 2003)
-
-    Args:
-        Q (np.array): streamflow
-        k (float): recession coefficient
-        A (float): calibrated in baseflow.param_estimate
-    """
-    b = np.zeros(Q.shape[0])
+def furey(flow, b_LH, k, c3c1):
+    """Furey digital filter (Furey & Gupta, 2001, 2003)"""
+    b = np.zeros(flow.shape[0])
 
     b[0] = b_LH[0]
 
-    coefficient = (1 - k) * c3c1
-
     num_exceed = 0
-    for i in range(Q.shape[0] - 1):
-        b[i + 1] = k * b[i] + coefficient * (Q[i] - b[i])
-        if b[i + 1] > Q[i + 1]:
-            b[i + 1] = Q[i + 1]
+    for i in range(1, flow.shape[0]):
+        b[i] = k * b[i - 1] + (1 - k) * c3c1 * (flow[i - 1] - b[i - 1])
+        if b[i] > flow[i]:
+            b[i] = flow[i]
             num_exceed += 1
 
     return b, num_exceed

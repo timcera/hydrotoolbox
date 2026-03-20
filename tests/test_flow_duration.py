@@ -246,8 +246,6 @@ def test_flow_duration(
     if len(expected.columns) == 1:
         expected.columns = ["A"]
     expected.index.name = "Quantiles"
-    print(result)
-    print(expected)
     pd.testing.assert_frame_equal(
         result, expected, check_index_type=False, check_dtype=False
     )

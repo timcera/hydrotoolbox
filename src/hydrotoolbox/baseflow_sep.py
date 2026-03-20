@@ -69,7 +69,6 @@ def bfsep(
     c3c1=None,
     C=None,
     a=None,
-    alpha=0.925,
     bfi_max=None,
 ):
     complete_index = pd.date_range(start=flow.index[0], end=flow.index[-1], freq="D")
@@ -120,7 +119,6 @@ def bfsep(
                 c3c1=c3c1,
                 C=C,
                 a=a,
-                alpha=alpha,
                 bfi_max=bfi_max,
             )[bfi],
             index=ncol.index,
@@ -281,7 +279,7 @@ def chapman(
 
 
 @tsutils.doc(tsutils.docstrings)
-def cm(
+def chapman_maxwell(
     k=None,
     input_ts="-",
     columns=None,
@@ -297,7 +295,7 @@ def cm(
     target_units=None,
     print_input=False,
 ):
-    """CM filter (Chapman and Maxwell, 1996)
+    """Digital filter (Chapman and Maxwell, 1996)
 
     ::
 
@@ -340,7 +338,7 @@ def cm(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "cm", print_input, k=k)
+    return bfsep(flow, "chapman_maxwell", print_input, k=k)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -625,7 +623,7 @@ def furey(
 
 
 @tsutils.doc(tsutils.docstrings)
-def lh(
+def lyne_hollick(
     input_ts="-",
     alpha=0.925,
     columns=None,
@@ -642,7 +640,7 @@ def lh(
     print_input=False,
 ):
     """
-    LH digital filter (Lyne and Hollick, 1979)[1]_
+    Digital filter (Lyne and Hollick, 1979)[1]_
 
     .. math::
 
@@ -690,7 +688,7 @@ def lh(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "lh", print_input, alpha=alpha)
+    return bfsep(flow, "lyne_hollick", print_input, k=alpha)
 
 
 @tsutils.doc(tsutils.docstrings)

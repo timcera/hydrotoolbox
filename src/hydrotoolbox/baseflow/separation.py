@@ -4,7 +4,7 @@ from .comparison import KGE, strict_baseflow
 from .methods import (
     boughton,
     chapman,
-    cm,
+    chapman_maxwell,
     eckhardt,
     ewma,
     f_Boughton,
@@ -15,8 +15,8 @@ from .methods import (
     fixed,
     furey,
     ihacres,
-    lh,
     local,
+    lyne_hollick,
     slide,
     strict,
     ukih,
@@ -36,7 +36,6 @@ def separation(
     c3c1=None,
     C=None,
     a=None,
-    alpha=0.925,
     bfi_max=None,
 ):
     if method == "all":
@@ -45,9 +44,9 @@ def separation(
             "local",
             "fixed",
             "slide",
-            "lh",
+            "lyne_hollick",
             "chapman",
-            "cm",
+            "chapman_maxwell",
             "boughton",
             "furey",
             "eckhardt",
@@ -64,24 +63,21 @@ def separation(
 
     b = np.recarray(Q.shape[0], dtype=list(zip(method, [float] * len(method))))
 
-    for m in method:
-        if m in ["chapman", "cm", "boughton", "furey", "eckhardt", "willems"]:
-            if k is None:
-                k = recession_coefficient(Q, strict_bf, date, ice_period)
-            k = float(k)
+    if k is None:
+        k = recession_coefficient(Q, strict_bf, date, ice_period)
+    k = float(k)
 
+    for m in method:
         if m in [
             "ukih",
             "local",
-            "chapman",
-            "cm",
-            "boughton",
+            "chapman_maxwell",
             "furey",
             "eckhardt",
-            "willems",
             "ewma",
+            "willems",
         ]:
-            b_lh = lh(Q, alpha=alpha)[0]
+            b_lh = lyne_hollick(Q, k=k)[0]
 
         if m == "ukih":
             b[m] = ukih(Q, b_lh)
@@ -95,14 +91,14 @@ def separation(
         if m == "slide":
             b[m] = slide(Q, area=area, num_days=num_days)
 
-        if m == "lh":
-            b[m] = lh(Q, alpha=alpha)[0]
+        if m == "lyne_hollick":
+            b[m] = lyne_hollick(Q, k=k)[0]
 
         if m == "chapman":
-            b[m] = chapman(Q, b_lh, k)[0]
+            b[m] = chapman(Q, k)[0]
 
-        if m == "cm":
-            b[m] = cm(Q, b_lh, k)[0]
+        if m == "chapman_maxwell":
+            b[m] = chapman_maxwell(Q, k)[0]
 
         if m == "boughton":
             if C is None:
@@ -110,7 +106,7 @@ def separation(
                     np.arange(0.0001, 1, 0.0001), f_Boughton(k), Q, b_lh
                 )
             C = float(C)
-            b[m] = boughton(Q, b_lh, k, C)[0]
+            b[m] = boughton(Q, k, C)[0]
 
         if m == "furey":
             if c3c1 is None:

@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from hydrotoolbox import hydrotoolbox
+from hydrotoolbox.toolbox_utils.src.toolbox_utils.utils import pandas_offset_by_version
 
 
 @pytest.mark.parametrize(
@@ -35,7 +36,9 @@ from hydrotoolbox import hydrotoolbox
             [30, 40],
             pd.Series(
                 [5, 15, 25, 35],
-                index=pd.date_range(start="1/1/2022", periods=4, freq="H"),
+                index=pd.date_range(
+                    start="1/1/2022", periods=4, freq=pandas_offset_by_version("h")
+                ),
             ),
             [0],
             "under",
@@ -58,7 +61,9 @@ from hydrotoolbox import hydrotoolbox
             [15],
             pd.Series(
                 [5, 15, 25, 35],
-                index=pd.date_range(start="1/1/2022", periods=4, freq="M"),
+                index=pd.date_range(
+                    start="1/1/2022", periods=4, freq=pandas_offset_by_version("ME")
+                ),
             ),
             [0],
             "over",

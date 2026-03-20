@@ -1,14 +1,14 @@
 
-# boughton chapman cm eckhardt ewma fixed furey lh local slide ukih willems
+# boughton chapman chapman_maxwell eckhardt ewma fixed furey lyne_hollick local slide ukih willems
 
 
 echo "chapman"
 time hydrotoolbox baseflow_sep chapman --print_input < example.csv > example_chapman.csv
 plottoolbox time --start_date 2018-01-01 --ofilename chapman.png < example_chapman.csv
 
-echo "cm"
-time hydrotoolbox baseflow_sep cm --print_input < example.csv > example_cm.csv
-plottoolbox time --start_date 2018-01-01 --ofilename cm.png < example_cm.csv
+echo "chapman_maxwell"
+time hydrotoolbox baseflow_sep chapman_maxwell --print_input < example.csv > example_chapman_maxwell.csv
+plottoolbox time --start_date 2018-01-01 --ofilename chapman_maxwell.png < example_chapman_maxwell.csv
 
 echo "eckhardt"
 time hydrotoolbox baseflow_sep eckhardt --print_input < example.csv > example_eckhardt.csv
@@ -46,9 +46,9 @@ echo "willems"
 time hydrotoolbox baseflow_sep willems --print_input < example.csv > example_willems.csv
 plottoolbox time --start_date 2018-01-01 --ofilename willems.png < example_willems.csv
 
-echo "lh"
-time hydrotoolbox baseflow_sep lh --print_input < example.csv > example_lh.csv
-plottoolbox time --start_date 2018-01-01 --ofilename lh.png < example_lh.csv
+echo "lyne_hollick"
+time hydrotoolbox baseflow_sep lyne_hollick --print_input < example.csv > example_lyne_hollick.csv
+plottoolbox time --start_date 2018-01-01 --ofilename lyne_hollick.png < example_lyne_hollick.csv
 
 echo "five_day"
 time hydrotoolbox baseflow_sep five_day --print_input < example.csv > example_five_day.csv

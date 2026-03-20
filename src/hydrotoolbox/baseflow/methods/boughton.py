@@ -1,26 +1,17 @@
-import numpy as np
+from hydrotoolbox.baseflow.methods.general_form import general_form_digital_filter
 
 
-def boughton(Q, b_LH, k, C):
+def boughton(flow, k, C):
     """Boughton double-parameter filter (Boughton, 2004)"""
-    b = np.zeros(Q.shape[0])
-    b[0] = b_LH[0]
-
     alpha = k / (1 + C)
     beta = C / (1 + C)
+    gamma = 0.0
 
-    num_exceed = 0
-    for i in range(Q.shape[0] - 1):
-        b[i + 1] = alpha * b[i] + beta * Q[i + 1]
-        if b[i + 1] > Q[i + 1]:
-            b[i + 1] = Q[i + 1]
-            num_exceed += 1
-
-    return b, num_exceed
+    return general_form_digital_filter(flow, alpha, beta, gamma)
 
 
 def f_Boughton(k):
-    def _Boughton(Q, b_LH, C):
-        return boughton(Q, b_LH, k, C)
+    def _Boughton(Q, C):
+        return boughton(Q, k, C)
 
     return _Boughton

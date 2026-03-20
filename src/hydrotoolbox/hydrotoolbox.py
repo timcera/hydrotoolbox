@@ -152,9 +152,9 @@ def _chapman_cli(
     )
 
 
-@program.baseflow_sep.command("cm", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.cm)
-def _cm_cli(
+@program.baseflow_sep.command("chapman_maxwell", formatter_class=RSTHelpFormatter)
+@tsutils.copy_doc(baseflow_sep.chapman_maxwell)
+def _chapman_maxwell_cli(
     k=None,
     input_ts="-",
     columns=None,
@@ -171,9 +171,9 @@ def _cm_cli(
     print_input=False,
     tablefmt="csv",
 ):
-    """CM filter (Chapman and Maxwell, 1996)"""
+    """Digital filter (Chapman and Maxwell, 1996)"""
     tsutils.printiso(
-        baseflow_sep.cm(
+        baseflow_sep.chapman_maxwell(
             k=k,
             input_ts=input_ts,
             columns=columns,
@@ -374,9 +374,9 @@ def _furey_cli(
     )
 
 
-@program.baseflow_sep.command("lh", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.lh)
-def _lh_cli(
+@program.baseflow_sep.command("lyne_hollick", formatter_class=RSTHelpFormatter)
+@tsutils.copy_doc(baseflow_sep.lyne_hollick)
+def _lyne_hollick_cli(
     input_ts="-",
     alpha=0.925,
     columns=None,
@@ -394,7 +394,7 @@ def _lh_cli(
     tablefmt="csv",
 ):
     tsutils.printiso(
-        baseflow_sep.lh(
+        baseflow_sep.lyne_hollick(
             input_ts=input_ts,
             alpha=alpha,
             columns=columns,

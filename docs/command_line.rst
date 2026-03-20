@@ -27,9 +27,9 @@ baseflow_sep chapman
 .. program-output:: hydrotoolbox baseflow_sep chapman --help
    :prompt:
 
-baseflow_sep cm
+baseflow_sep chapman_maxwell
 ---------------
-.. program-output:: hydrotoolbox baseflow_sep cm --help
+.. program-output:: hydrotoolbox baseflow_sep chapman_maxwell --help
    :prompt:
 
 baseflow_sep eckhardt
@@ -57,14 +57,9 @@ baseflow_sep ihacres
 .. program-output:: hydrotoolbox baseflow_sep ihacres --help
    :prompt:
 
-baseflow_sep lh
+baseflow_sep lyne_hollick
 ---------------
-.. program-output:: hydrotoolbox baseflow_sep lh --help
-   :prompt:
-
-baseflow_sep strict
--------------------
-.. program-output:: hydrotoolbox baseflow_sep strict --help
+.. program-output:: hydrotoolbox baseflow_sep lyne_hollick --help
    :prompt:
 
 baseflow_sep ukih

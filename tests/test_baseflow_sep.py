@@ -22,16 +22,15 @@ def pytest_generate_tests(metafunc):
 
 # Current test failures:
 #     dict(expected="strict"),
-#     dict(expected="ihacres"),
 BFLIST = [
-    {"expected": "ihacres"},
     {"expected": "chapman"},
-    {"expected": "cm"},
+    {"expected": "chapman_maxwell"},
     {"expected": "eckhardt"},
     {"expected": "ewma"},
     {"expected": "five_day"},
     {"expected": "furey"},
-    {"expected": "lh"},
+    {"expected": "ihacres"},
+    {"expected": "lyne_hollick"},
     {"expected": "ukih"},
     {"expected": "usgs_hysep_fixed"},
     {"expected": "usgs_hysep_local"},
@@ -50,9 +49,9 @@ class TestBaseflowSep:
             extra_args = "0.1 0.5 0.5"
         elif expected == "chapman":
             extra_args = "-k=0.5"
-        elif expected == "cm":
+        elif expected == "chapman_maxwell":
             extra_args = "-k=0.1"
-        elif expected == "lh":
+        elif expected == "lyne_hollick":
             extra_args = "--alpha=0.750"
         elif expected in ["usgs_hysep_fixed", "usgs_hysep_local", "usgs_hysep_slide"]:
             extra_args = "--num_days=1"
@@ -83,9 +82,9 @@ class TestBaseflowSep:
             extra_args = "0.1, 0.5, 0.5,"
         elif expected == "chapman":
             extra_args = "k=0.5,"
-        elif expected == "cm":
+        elif expected == "chapman_maxwell":
             extra_args = "k=0.1,"
-        elif expected == "lh":
+        elif expected == "lyne_hollick":
             extra_args = "alpha=0.750,"
         elif expected in ["usgs_hysep_fixed", "usgs_hysep_local", "usgs_hysep_slide"]:
             extra_args = "num_days=1,"
