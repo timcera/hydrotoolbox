@@ -1,3 +1,9 @@
+## v2.1.0 (2026-03-19)
+
+### Feat
+
+- complete revamp of baseflow_sep using scipy.lfilter for most
+
 ## v2.0.14 (2025-06-29)
 
 ### Fix
