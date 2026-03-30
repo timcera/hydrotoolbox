@@ -8,18 +8,26 @@ hydrotoolbox baseflow eckhardt,sliding < daily.csv
 
 hydrotoolbox recession"""
 
+__all__ = [
+    "about",
+    "exceedance_time",
+    "flow_duration",
+    "indices",
+    "recession",
+    "storm_events",
+]
+
 import datetime
 import itertools
 import os.path
 import re
 import sys
 import warnings
+from argparse import RawTextHelpFormatter
 from typing import Literal
 
 import numpy as np
 import pandas as pd
-from cltoolbox import Program
-from cltoolbox.rst_text_formatter import RSTHelpFormatter
 
 try:
     from pydantic import validate_call
@@ -28,17 +36,13 @@ except ImportError:
 
 from scipy.signal import find_peaks
 
-from . import baseflow_sep
-from .baseflow.comparison import strict_baseflow
-from .baseflow.param_estimate import recession_coefficient
-from .indices import indices as ind
-from .toolbox_utils.src.toolbox_utils import tsutils
+from hydrotoolbox import baseflow_sep
+from hydrotoolbox.baseflow.comparison import strict_baseflow
+from hydrotoolbox.baseflow.param_estimate import recession_coefficient
+from hydrotoolbox.indices import indices as ind
+from hydrotoolbox.toolbox_utils.src.toolbox_utils import tsutils
 
 warnings.filterwarnings("ignore")
-
-program = Program("hydrotoolbox", "0.0")
-
-program.add_subprog("baseflow_sep")
 
 
 def atoi(text):
@@ -51,673 +55,7 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r"(\d+)", text)]
 
 
-@program.baseflow_sep.command("boughton", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.boughton)
-def _boughton_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    """Boughton double-parameter filter (Boughton, 2004)"""
-    tsutils.printiso(
-        baseflow_sep.boughton(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("chapman", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.chapman)
-def _chapman_cli(
-    k=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    """
-    Chapman filter (Chapman, 1991)
-
-    Parameters
-    ----------
-    {k}
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    tsutils.printiso(
-        baseflow_sep.chapman(
-            k=k,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("chapman_maxwell", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.chapman_maxwell)
-def _chapman_maxwell_cli(
-    k=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    """Digital filter (Chapman and Maxwell, 1996)"""
-    tsutils.printiso(
-        baseflow_sep.chapman_maxwell(
-            k=k,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("eckhardt", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.eckhardt)
-def _eckhardt_cli(
-    input_ts="-",
-    columns=None,
-    k=None,
-    bfi_max=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    """
-    Eckhardt filter (Eckhardt, 2005)
-
-    Parameters
-    ----------
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    tsutils.printiso(
-        baseflow_sep.eckhardt(
-            input_ts=input_ts,
-            columns=columns,
-            k=k,
-            bfi_max=bfi_max,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("ewma", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.ewma)
-def _ewma_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.ewma(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("five_day", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.five_day)
-def _five_day_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.five_day(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("furey", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.furey)
-def _furey_cli(
-    k=None,
-    c3c1=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.furey(
-            k=k,
-            c3c1=c3c1,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("lyne_hollick", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.lyne_hollick)
-def _lyne_hollick_cli(
-    input_ts="-",
-    alpha=0.925,
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.lyne_hollick(
-            input_ts=input_ts,
-            alpha=alpha,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("ihacres", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.ihacres)
-def _ihacres_cli(
-    k,
-    C,
-    a,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.ihacres(
-            k,
-            C,
-            a,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("ukih", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.ukih)
-def _ukih_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.ukih(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("willems", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.willems)
-def _willems_cli(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.willems(
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("usgs_hysep_fixed", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.usgs_hysep_fixed)
-def _usgs_hysep_fixed_cli(
-    num_days=None,
-    area=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.usgs_hysep_fixed(
-            num_days=num_days,
-            area=area,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("usgs_hysep_local", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.usgs_hysep_local)
-def _usgs_hysep_local_cli(
-    num_days=None,
-    area=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.usgs_hysep_local(
-            num_days=num_days,
-            area=area,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.baseflow_sep.command("usgs_hysep_slide", formatter_class=RSTHelpFormatter)
-@tsutils.copy_doc(baseflow_sep.usgs_hysep_slide)
-def _usgs_hysep_slide_cli(
-    num_days=None,
-    area=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-    tablefmt="csv",
-):
-    tsutils.printiso(
-        baseflow_sep.usgs_hysep_slide(
-            num_days=num_days,
-            area=area,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-            print_input=print_input,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-# @program.baseflow_sep.command("strict", formatter_class=RSTHelpFormatter)
-# @tsutils.copy_doc(baseflow_sep.strict)
-# def _strict_cli(
-#     input_ts="-",
-#     columns=None,
-#     source_units=None,
-#     start_date=None,
-#     end_date=None,
-#     dropna="no",
-#     clean=False,
-#     round_index=None,
-#     skiprows=None,
-#     index_type="datetime",
-#     names=None,
-#     target_units=None,
-#     print_input=False,
-#     tablefmt="csv",
-# ):
-#     """
-#     Return "strict" baseflow.
-#
-#     Parameters
-#     ----------
-#     ${input_ts}
-#     ${columns}
-#     ${source_units}
-#     ${start_date}
-#     ${end_date}
-#     ${dropna}
-#     ${clean}
-#     ${round_index}
-#     ${skiprows}
-#     ${index_type}
-#     ${names}
-#     ${target_units}
-#     ${print_input}
-#     ${tablefmt}
-#     """
-#     tsutils.printiso(
-#         baseflow_sep.strict(
-#             input_ts=input_ts,
-#             columns=columns,
-#             source_units=source_units,
-#             start_date=start_date,
-#             end_date=end_date,
-#             dropna=dropna,
-#             clean=clean,
-#             round_index=round_index,
-#             skiprows=skiprows,
-#             index_type=index_type,
-#             names=names,
-#             target_units=target_units,
-#             print_input=print_input,
-#         ),
-#         tablefmt=tablefmt,
-#     )
-
-
+@tsutils.doc(tsutils.docstrings)
 def recession(
     date=None,
     ice_period=None,
@@ -734,6 +72,29 @@ def recession(
     names=None,
     target_units=None,
 ):
+    """
+    Recession coefficient.
+
+    Parameters
+    ----------
+    date
+        Date term
+    ice_period
+        Period of ice that changes the discharge relationship
+    input_ts
+        Streamflow
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -758,133 +119,7 @@ def recession(
     return rc
 
 
-@program.command("recession", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
-def _recession_cli(
-    date=None,
-    ice_period=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    tablefmt="plain",
-):
-    """
-    Recession coefficient.
-
-    Parameters
-    ----------
-    date
-        Date term
-    ice_period
-        Period of ice that changes the discharge relationship
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${tablefmt}
-    """
-    tsutils.printiso(
-        recession(
-            date=date,
-            ice_period=ice_period,
-            input_ts=input_ts,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@program.command("flow_duration", formatter_class=RSTHelpFormatter)
-@tsutils.doc(tsutils.docstrings)
-def _flow_duration_cli(
-    input_ts="-",
-    exceedance_probabilities=(99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5),
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    tablefmt="csv",
-):
-    """
-    Flow duration.
-
-    Parameters
-    ----------
-    ${input_ts}
-    exceedance_probabilities
-        [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5)]
-
-        Exceedance probabilities
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${tablefmt}
-    """
-    tsutils.printiso(
-        flow_duration(
-            input_ts=input_ts,
-            exceedance_probabilities=exceedance_probabilities,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-        ),
-        tablefmt=tablefmt,
-        showindex=True,
-    )
-
-
-@tsutils.copy_doc(_flow_duration_cli)
 def flow_duration(
     input_ts="-",
     exceedance_probabilities=(99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5),
@@ -900,7 +135,28 @@ def flow_duration(
     names=None,
     target_units=None,
 ):
-    """Calculate flow duration for different exceedance probabilities."""
+    """
+    Flow duration.
+
+    Parameters
+    ----------
+    ${input_ts}
+    exceedance_probabilities
+        [optional, default: (99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1,
+        0.5)]
+        Exceedance probabilities
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -924,14 +180,13 @@ def flow_duration(
     return ndf
 
 
-@program.command("storm_events", formatter_class=RSTHelpFormatter)
 @tsutils.doc(tsutils.docstrings)
-def _storm_events_cli(
+def storm_events(
     rise_lag,
     fall_lag,
     input_ts="-",
+    min_peak=None,
     window=1,
-    min_peak=0,
     columns=None,
     source_units=None,
     start_date=None,
@@ -943,7 +198,6 @@ def _storm_events_cli(
     index_type="datetime",
     names=None,
     target_units=None,
-    tablefmt="plain",
 ):
     """
     Storm events.
@@ -978,51 +232,7 @@ def _storm_events_cli(
     ${index_type}
     ${names}
     ${target_units}
-    ${tablefmt}
     """
-    tsutils.printiso(
-        storm_events(
-            rise_lag=rise_lag,
-            fall_lag=fall_lag,
-            input_ts=input_ts,
-            window=window,
-            min_peak=min_peak,
-            columns=columns,
-            source_units=source_units,
-            start_date=start_date,
-            end_date=end_date,
-            dropna=dropna,
-            clean=clean,
-            round_index=round_index,
-            skiprows=skiprows,
-            index_type=index_type,
-            names=names,
-            target_units=target_units,
-        ),
-        tablefmt=tablefmt,
-    )
-
-
-@tsutils.copy_doc(_storm_events_cli)
-def storm_events(
-    rise_lag,
-    fall_lag,
-    input_ts="-",
-    min_peak=None,
-    window=1,
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-):
-    """Find peak storm events."""
     if rise_lag < 0 or fall_lag < 0:
         raise ValueError("rise_lag and fall_lag must be greater than 0.")
 
@@ -1058,14 +268,14 @@ def storm_events(
     return ndf
 
 
-@program.command("indices", formatter_class=RSTHelpFormatter)
+@tsutils.transform_args(indice_codes=tsutils.make_list)
 @tsutils.doc(tsutils.docstrings)
-def _indices_cli(
-    indice_codes,
+def indices(
+    *indice_codes,
+    input_ts="-",
     water_year="YE-SEP",
     drainage_area=1,
     use_median=False,
-    input_ts="-",
     columns=None,
     source_units=None,
     start_date=None,
@@ -1077,7 +287,6 @@ def _indices_cli(
     index_type="datetime",
     names=None,
     target_units=None,
-    tablefmt="plain",
 ):
     """
     Calculate hydrologic indices.
@@ -1464,59 +673,7 @@ def _indices_cli(
     ${names}
     ${target_units}
     ${print_input}
-    ${tablefmt}
     """
-    ret = [
-        [key, val]
-        for key, val in (
-            indices(
-                indice_codes,
-                input_ts=input_ts,
-                water_year=water_year,
-                drainage_area=drainage_area,
-                use_median=use_median,
-                columns=columns,
-                source_units=source_units,
-                start_date=start_date,
-                end_date=end_date,
-                dropna=dropna,
-                clean=clean,
-                round_index=round_index,
-                skiprows=skiprows,
-                index_type=index_type,
-                names=names,
-                target_units=target_units,
-            )
-        ).items()
-    ]
-    tsutils.printiso(
-        ret,
-        tablefmt=tablefmt,
-        headers=["Indices", "Value"],
-        float_format=".3f",
-    )
-
-
-@tsutils.transform_args(indice_codes=tsutils.make_list)
-def indices(
-    *indice_codes,
-    input_ts="-",
-    water_year="YE-SEP",
-    drainage_area=1,
-    use_median=False,
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-):
-    """Return the requested hydrologic indices."""
 
     indice_codes = list(indice_codes)
     flow = tsutils.common_kwds(
@@ -1876,13 +1033,27 @@ def indices(
     }
 
 
-@program.command("exceedance_time", formatter_class=RSTHelpFormatter)
+@validate_call
 @tsutils.doc(tsutils.docstrings)
-def _exceedance_time_cli(
+def exceedance_time(
+    *thresholds,
     input_ts="-",
     delays=0,
     under_over="over",
-    time_units="day",
+    time_units: Literal[
+        "year",
+        "month",
+        "day",
+        "hour",
+        "min",
+        "sec",
+        "years",
+        "months",
+        "days",
+        "hours",
+        "mins",
+        "secs",
+    ] = "day",
     columns=None,
     source_units=None,
     start_date=None,
@@ -1894,7 +1065,6 @@ def _exceedance_time_cli(
     index_type="datetime",
     names=None,
     target_units=None,
-    *thresholds,
 ):
     """
     Calculate the time that a time series exceeds (or is below) a threshold.
@@ -1932,65 +1102,6 @@ def _exceedance_time_cli(
     ${target_units}
     ${print_input}
     """
-    ans = exceedance_time(
-        input_ts=input_ts,
-        delays=delays,
-        under_over=under_over,
-        time_units=time_units,
-        columns=columns,
-        source_units=source_units,
-        start_date=start_date,
-        end_date=end_date,
-        dropna=dropna,
-        clean=clean,
-        round_index=round_index,
-        skiprows=skiprows,
-        index_type=index_type,
-        names=names,
-        target_units=target_units,
-        *thresholds,
-    )
-    ans = list(ans.items())
-    tsutils.printiso(
-        ans,
-        float_format=".3f",
-        headers=["Flow", f"Exceedance Time ({under_over} {time_units})"],
-    )
-
-
-@validate_call
-def exceedance_time(
-    *thresholds,
-    input_ts="-",
-    delays=0,
-    under_over="over",
-    time_units: Literal[
-        "year",
-        "month",
-        "day",
-        "hour",
-        "min",
-        "sec",
-        "years",
-        "months",
-        "days",
-        "hours",
-        "mins",
-        "secs",
-    ] = "day",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-):
-    """Calculates the exceedance time over thresholds."""
     series = tsutils.common_kwds(
         tsutils.read_iso_ts(
             input_ts,
@@ -2081,7 +1192,6 @@ def exceedance_time(
     return e_table
 
 
-@program.command()
 def about():
     """Display version number and system information."""
     tsutils.about(__name__)
@@ -2090,7 +1200,968 @@ def about():
 def main():
     """Test for debug file."""
     if not os.path.exists("debug_hydrotoolbox"):
-        sys.tracebacklimit = 0
+        sys.tracebacklimit = 1
+
+    from cltoolbox import Program
+
+    program = Program("hydrotoolbox", "0.0")
+
+    program.add_subprog("baseflow_sep")
+
+    tablefmt_docstring = r"""[optional, default is 'cvs_nos']
+
+The table format.  Can be one of 'csv', 'tsv', 'csv_nos', 'tsv_nos',
+'plain', 'simple', 'github', 'grid', 'fancy_grid', 'pipe', 'orgtbl',
+'jira', 'presto', 'psql', 'rst', 'mediawiki', 'moinmoin', 'youtrack',
+'html', 'latex', 'latex_raw', 'latex_booktabs' and 'textile'."""
+    float_format_docstring = r"""[optional, default is 'g']
+
+The format for floating point numbers in the output table."""
+
+    @program.command("about")
+    def _about_cli():
+        """Display version number and system information."""
+        tsutils.about(__name__)
+
+    @program.command("exceedance_time", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(exceedance_time)
+    def _exceedance_time_cli(
+        input_ts="-",
+        delays=0,
+        under_over="over",
+        time_units="day",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        tablefmt="csv_nos",
+        float_format=".3f",
+        *thresholds,
+    ):
+        ans = exceedance_time(
+            input_ts=input_ts,
+            delays=delays,
+            under_over=under_over,
+            time_units=time_units,
+            columns=columns,
+            source_units=source_units,
+            start_date=start_date,
+            end_date=end_date,
+            dropna=dropna,
+            clean=clean,
+            round_index=round_index,
+            skiprows=skiprows,
+            index_type=index_type,
+            names=names,
+            target_units=target_units,
+            *thresholds,
+        )
+        ans = list(ans.items())
+        tsutils.printiso(
+            ans,
+            headers=["Flow", f"Exceedance Time ({under_over} {time_units})"],
+            tablefmt=tablefmt,
+            float_format=float_format,
+        )
+
+    @program.baseflow_sep.command("boughton", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.boughton)
+    def _boughton_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        """Boughton double-parameter filter (Boughton, 2004)"""
+        tsutils.printiso(
+            baseflow_sep.boughton(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+            float_format=float_format,
+        )
+
+    @program.baseflow_sep.command("chapman", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.chapman)
+    def _chapman_cli(
+        k=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        """
+        Chapman filter (Chapman, 1991)
+
+        Parameters
+        ----------
+        {k}
+        input_ts
+            Streamflow
+        ${columns}
+        ${source_units}
+        ${start_date}
+        ${end_date}
+        ${dropna}
+        ${clean}
+        ${round_index}
+        ${skiprows}
+        ${index_type}
+        ${names}
+        ${target_units}
+        ${print_input}
+        ${tablefmt}
+        """
+        tsutils.printiso(
+            baseflow_sep.chapman(
+                k=k,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+            float_format=float_format,
+        )
+
+    @program.baseflow_sep.command(
+        "chapman_maxwell", formatter_class=RawTextHelpFormatter
+    )
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.chapman_maxwell)
+    def _chapman_maxwell_cli(
+        k=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        """Digital filter (Chapman and Maxwell, 1996)"""
+        tsutils.printiso(
+            baseflow_sep.chapman_maxwell(
+                k=k,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+            float_format=float_format,
+        )
+
+    @program.baseflow_sep.command("eckhardt", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.eckhardt)
+    def _eckhardt_cli(
+        input_ts="-",
+        columns=None,
+        k=None,
+        bfi_max=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        """
+        Eckhardt filter (Eckhardt, 2005)
+
+        Parameters
+        ----------
+        input_ts
+            Streamflow
+        ${columns}
+        ${source_units}
+        ${start_date}
+        ${end_date}
+        ${dropna}
+        ${clean}
+        ${round_index}
+        ${skiprows}
+        ${index_type}
+        ${names}
+        ${target_units}
+        ${print_input}
+        ${tablefmt}
+        """
+        tsutils.printiso(
+            baseflow_sep.eckhardt(
+                input_ts=input_ts,
+                columns=columns,
+                k=k,
+                bfi_max=bfi_max,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+            float_format=float_format,
+        )
+
+    @program.baseflow_sep.command("ewma", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.ewma)
+    def _ewma_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.ewma(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("five_day", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.five_day)
+    def _five_day_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.five_day(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("furey", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.furey)
+    def _furey_cli(
+        k=None,
+        c3c1=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.furey(
+                k=k,
+                c3c1=c3c1,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("lyne_hollick", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.lyne_hollick)
+    def _lyne_hollick_cli(
+        input_ts="-",
+        alpha=0.925,
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.lyne_hollick(
+                input_ts=input_ts,
+                alpha=alpha,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("ihacres", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.ihacres)
+    def _ihacres_cli(
+        k,
+        C,
+        a,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.ihacres(
+                k,
+                C,
+                a,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("ukih", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.ukih)
+    def _ukih_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.ukih(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("willems", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.willems)
+    def _willems_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.willems(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command(
+        "usgs_hysep_fixed", formatter_class=RawTextHelpFormatter
+    )
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.usgs_hysep_fixed)
+    def _usgs_hysep_fixed_cli(
+        num_days=None,
+        area=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.usgs_hysep_fixed(
+                num_days=num_days,
+                area=area,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command(
+        "usgs_hysep_local", formatter_class=RawTextHelpFormatter
+    )
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.usgs_hysep_local)
+    def _usgs_hysep_local_cli(
+        num_days=None,
+        area=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.usgs_hysep_local(
+                num_days=num_days,
+                area=area,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command(
+        "usgs_hysep_slide", formatter_class=RawTextHelpFormatter
+    )
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.usgs_hysep_slide)
+    def _usgs_hysep_slide_cli(
+        num_days=None,
+        area=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            baseflow_sep.usgs_hysep_slide(
+                num_days=num_days,
+                area=area,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    # @program.baseflow_sep.command("strict", formatter_class=RawTextHelpFormatter)
+    # @tsutils.copy_doc(baseflow_sep.strict)
+    # def _strict_cli(
+    #     input_ts="-",
+    #     columns=None,
+    #     source_units=None,
+    #     start_date=None,
+    #     end_date=None,
+    #     dropna="no",
+    #     clean=False,
+    #     round_index=None,
+    #     skiprows=None,
+    #     index_type="datetime",
+    #     names=None,
+    #     target_units=None,
+    #     print_input=False,
+    #     tablefmt="csv",
+    # ):
+    #     """
+    #     Return "strict" baseflow.
+    #
+    #     Parameters
+    #     ----------
+    #     ${input_ts}
+    #     ${columns}
+    #     ${source_units}
+    #     ${start_date}
+    #     ${end_date}
+    #     ${dropna}
+    #     ${clean}
+    #     ${round_index}
+    #     ${skiprows}
+    #     ${index_type}
+    #     ${names}
+    #     ${target_units}
+    #     ${print_input}
+    #     ${tablefmt}
+    #     """
+    #     tsutils.printiso(
+    #         baseflow_sep.strict(
+    #             input_ts=input_ts,
+    #             columns=columns,
+    #             source_units=source_units,
+    #             start_date=start_date,
+    #             end_date=end_date,
+    #             dropna=dropna,
+    #             clean=clean,
+    #             round_index=round_index,
+    #             skiprows=skiprows,
+    #             index_type=index_type,
+    #             names=names,
+    #             target_units=target_units,
+    #             print_input=print_input,
+    #         ),
+    #         tablefmt=tablefmt,
+    #     )
+
+    @program.command("recession", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(recession)
+    def _recession_cli(
+        date=None,
+        ice_period=None,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        tablefmt="plain",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            recession(
+                date=date,
+                ice_period=ice_period,
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.command("flow_duration", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(flow_duration)
+    def _flow_duration_cli(
+        input_ts="-",
+        exceedance_probabilities=(99.5, 99, 98, 95, 90, 75, 50, 25, 10, 5, 2, 1, 0.5),
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        tablefmt="csv",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            flow_duration(
+                input_ts=input_ts,
+                exceedance_probabilities=exceedance_probabilities,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+            ),
+            tablefmt=tablefmt,
+            showindex=True,
+        )
+
+    @program.command("storm_events", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(storm_events)
+    def _storm_events_cli(
+        rise_lag,
+        fall_lag,
+        input_ts="-",
+        window=1,
+        min_peak=0,
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        tablefmt="plain",
+        float_format="g",
+    ):
+        tsutils.printiso(
+            storm_events(
+                rise_lag=rise_lag,
+                fall_lag=fall_lag,
+                input_ts=input_ts,
+                window=window,
+                min_peak=min_peak,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.command("indices", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(indices)
+    def _indices_cli(
+        indice_codes,
+        water_year="YE-SEP",
+        drainage_area=1,
+        use_median=False,
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        tablefmt="plain",
+        float_format="g",
+    ):
+        ret = [
+            [key, val]
+            for key, val in (
+                indices(
+                    indice_codes,
+                    input_ts=input_ts,
+                    water_year=water_year,
+                    drainage_area=drainage_area,
+                    use_median=use_median,
+                    columns=columns,
+                    source_units=source_units,
+                    start_date=start_date,
+                    end_date=end_date,
+                    dropna=dropna,
+                    clean=clean,
+                    round_index=round_index,
+                    skiprows=skiprows,
+                    index_type=index_type,
+                    names=names,
+                    target_units=target_units,
+                )
+            ).items()
+        ]
+        tsutils.printiso(
+            ret,
+            tablefmt=tablefmt,
+            headers=["Indices", "Value"],
+            float_format=".3f",
+        )
+
     program()
 
 

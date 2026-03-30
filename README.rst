@@ -31,7 +31,7 @@ or numpy (http://numpy.scipy.org) for any heavy lifting.
 
 Requirements
 ------------
-* python 3.7 or higher
+* python 3.10 or higher
 
 Installation
 ------------

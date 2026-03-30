@@ -1,5 +1,9 @@
 from typing import Optional
 
+__all__ = [
+    "local",
+]
+
 import numpy as np
 
 try:
@@ -7,7 +11,7 @@ try:
 except ImportError:
     from pydantic import validate_arguments as validate_call
 
-from .ukih import linear_interpolation
+from hydrotoolbox.baseflow.methods.ukih import linear_interpolation
 
 
 def local(Q, b_LH, area=None, num_days=None):

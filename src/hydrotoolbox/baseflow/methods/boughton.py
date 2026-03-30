@@ -1,3 +1,7 @@
+__all__ = [
+    "boughton",
+]
+
 from hydrotoolbox.baseflow.methods.general_form import general_form_digital_filter
 
 

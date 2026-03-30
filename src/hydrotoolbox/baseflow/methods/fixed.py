@@ -1,6 +1,10 @@
+__all__ = [
+    "fixed",
+]
+
 import numpy as np
 
-from .local import hysep_interval
+from hydrotoolbox.baseflow.methods.local import hysep_interval
 
 
 def fixed(Q, area=None, num_days=None):

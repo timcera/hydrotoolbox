@@ -72,9 +72,8 @@ def separation(
             "ukih",
             "local",
             "chapman_maxwell",
-            "furey",
-            "eckhardt",
             "ewma",
+            "furey",
             "willems",
         ]:
             b_lh = lyne_hollick(Q, k=k)[0]
@@ -120,7 +119,7 @@ def separation(
                     np.arange(0.0001, 1, 0.0001), f_Eckhardt(k), Q, b_lh
                 )
             bfi_max = float(bfi_max)
-            b[m] = eckhardt(Q, b_lh, k, bfi_max)[0]
+            b[m] = eckhardt(Q, k, bfi_max)[0]
 
         if m == "ewma":
             e = param_calibrate(np.arange(0.0001, 0.5, 0.0001), ewma, Q, b_lh)
@@ -131,7 +130,7 @@ def separation(
             b[m] = willems(Q, b_lh, k, w)[0]
 
         if m == "ihacres":
-            b[m] = ihacres(Q, k=k, C=C, a=a)
+            b[m] = ihacres(Q, k=k, C=C, a=a)[0]
 
         if m == "strict":
             b[m] = strict(Q)

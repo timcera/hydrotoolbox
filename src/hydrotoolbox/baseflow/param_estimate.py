@@ -1,6 +1,11 @@
+__all__ = [
+    "recession_coefficient",
+    "recession_period",
+]
+
 import numpy as np
 
-from .utils import NSE, moving_average, multi_arange
+from hydrotoolbox.baseflow.utils import NSE, moving_average, multi_arange
 
 
 def recession_coefficient(Q, strict, date=None, ice_period=None):
@@ -31,7 +36,7 @@ def recession_coefficient(Q, strict, date=None, ice_period=None):
     return np.exp(-1 / K)
 
 
-def param_calibrate(param_range, method, Q, b_LH):
+def param_calibrate(param_range, method, Q, b_LH=0):
     idx_rec = recession_period(Q)
     idx_oth = np.full(Q.shape[0], True)
     idx_oth[idx_rec] = False

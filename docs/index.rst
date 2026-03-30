@@ -5,10 +5,10 @@
 hydrotoolbox
 ============
 
-This is the home page for hydrotoolbox.  hydrotoolbox is a command line program and
-Python library for hydrologic analysis.
+This is the home page for hydrotoolbox.  hydrotoolbox is a command line program
+and Python library for hydrologic analysis.
 
-hydrotoolbox should work with Python 3.6+.
+hydrotoolbox should work with Python 3.10+.
 
 Table of Contents
 -----------------

@@ -1,3 +1,7 @@
+__all__ = [
+    "chapman_maxwell",
+]
+
 from hydrotoolbox.baseflow.methods.general_form import general_form_digital_filter
 
 

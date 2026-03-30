@@ -1,23 +1,18 @@
-import numpy as np
+__all__ = [
+    "eckhardt",
+]
+
+from hydrotoolbox.baseflow.methods.general_form import general_form_digital_filter
 
 
-def eckhardt(Q, b_LH, k, BFImax):
+def eckhardt(flow, k, BFImax):
     """Eckhardt filter (Eckhardt, 2005)"""
-    b = np.zeros(Q.shape[0])
-    b[0] = b_LH[0]
+    denom = 1 - k * BFImax
+    alpha = ((1 - BFImax) * k) / denom
+    beta = ((1 - k) * BFImax) / denom
+    gamma = 0
 
-    first_c = (1 - BFImax) * k
-    second_c = (1 - k) * BFImax
-    third_c = 1 - k * BFImax
-
-    num_exceed = 0
-    for i in range(Q.shape[0] - 1):
-        b[i + 1] = (first_c * b[i] + second_c * Q[i + 1]) / third_c
-        if b[i + 1] > Q[i + 1]:
-            b[i + 1] = Q[i + 1]
-            num_exceed += 1
-
-    return b, num_exceed
+    return general_form_digital_filter(flow, alpha, beta, gamma)
 
 
 def f_Eckhardt(a):

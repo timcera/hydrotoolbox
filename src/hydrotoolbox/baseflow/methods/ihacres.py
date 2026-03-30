@@ -7,9 +7,15 @@ hydrotoolbox baseflow_sep eckhardt,sliding < daily.csv
 
 hydrotoolbox recession"""
 
+__all__ = [
+    "ihacres",
+]
+
+from hydrotoolbox.baseflow.methods.general_form import general_form_digital_filter
+
 
 def ihacres(
-    Q,
+    flow,
     k: float,
     C: float,
     a: float,
@@ -18,13 +24,8 @@ def ihacres(
 
     Jakeman-Hornberger digital filter (Jakeman and Hornberger, 1993)
     """
-    Qb = Q.copy()
-
     alpha = k / (1 + C)
     beta = C / (1 + C)
+    gamma = a
 
-    for row in range(1, len(Q)):
-        Qb[row] = alpha * Qb[row - 1] + beta * (Q[row] + a * Q[row - 1])
-    mask = Qb > Q
-    Qb[mask] = Q[mask]
-    return Qb
+    return general_form_digital_filter(flow, alpha, beta, gamma)

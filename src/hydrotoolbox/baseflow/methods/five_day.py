@@ -7,6 +7,10 @@ hydrotoolbox baseflow_sep eckhardt,sliding < daily.csv
 
 hydrotoolbox recession"""
 
+__all__ = [
+    "five_day",
+]
+
 import pandas as pd
 
 

@@ -1,3 +1,8 @@
+__all__ = [
+    "KGE",
+    "strict_baseflow",
+]
+
 import numpy as np
 
 

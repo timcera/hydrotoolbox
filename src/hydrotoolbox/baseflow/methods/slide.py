@@ -1,6 +1,10 @@
+__all__ = [
+    "slide",
+]
+
 import numpy as np
 
-from .local import hysep_interval
+from hydrotoolbox.baseflow.methods.local import hysep_interval
 
 
 def slide(Q, area=None, num_days=None):

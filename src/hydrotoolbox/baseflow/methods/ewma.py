@@ -1,3 +1,7 @@
+__all__ = [
+    "ewma",
+]
+
 import numpy as np
 
 

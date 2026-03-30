@@ -7,7 +7,11 @@ hydrotoolbox baseflow_sep eckhardt,sliding < daily.csv
 
 hydrotoolbox recession"""
 
-from ..comparison import strict_baseflow
+__all__ = [
+    "strict",
+]
+
+from hydrotoolbox.baseflow.comparison import strict_baseflow
 
 
 def strict(Q):

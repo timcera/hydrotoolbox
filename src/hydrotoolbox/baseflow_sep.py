@@ -7,11 +7,45 @@ hydrotoolbox baseflow_sep eckhardt,sliding < daily.csv
 
 hydrotoolbox recession"""
 
+__all__ = [
+    "boughton",
+    "chapman",
+    "chapman_maxwell",
+    "eckhardt",
+    "ewma",
+    "five_day",
+    "furey",
+    "ihacres",
+    "lyne_hollick",
+    "ukih",
+    "usgs_hysep_fixed",
+    "usgs_hysep_local",
+    "usgs_hysep_slide",
+    "willems",
+]
+
 import logging
 import warnings
 
 import numpy as np
 import pandas as pd
+
+__all__ = [
+    "boughton",
+    "chapman",
+    "chapman_maxwell",
+    "eckhardt",
+    "ewma",
+    "usgs_hysep_fixed",
+    "furey",
+    "lyne_hollick",
+    "usgs_hysep_local",
+    "ihacres",
+    "usgs_hysep_slide",
+    "ukih",
+    "willems",
+    "five_day",
+]
 
 try:
     from pydantic import validate_call
@@ -149,16 +183,15 @@ def boughton(
     print_input=False,
 ):
     """
-    Boughton double-parameter filter (Boughton, 2004)[1]_
-
-    .. math::
-
-        b_{t}=\\left[\\frac{k}{1+C}\\right]b_{t-1}+\\left[\\frac{k}{1+C}\\right]Q_{t}
+    Boughton double-parameter filter [1]_
 
     ::
 
-        b = baseflow
-        Q = streamflow
+        bₜ = [k⁄(1+C)] bₜ₋₁ + [C⁄(1+C)] Qₜ
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
         k = groundwater recession constant
         C = watershed shape parameter
 
@@ -187,9 +220,9 @@ def boughton(
 
     References
     ----------
-    .. [1] Boughton W.C., 1993, A hydrograph-based model for estimating water
-           yield of ungauged catchments, Institute of Engineers Australia
-           National Conference. Publ. 93/14, pp. 317-324.
+    .. [1] Boughton W.C., 1993, A hydrograph-based model for
+       estimating water yield of ungauged catchments, Institute of Engineers
+       Australia National Conference. Publ. 93/14, pp. 317-324.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -228,11 +261,16 @@ def chapman(
     print_input=False,
 ):
     """
-    Chapman filter (Chapman, 1991)[1]_
+    Chapman filter [1]_
+    ::
 
-    .. math::
+        bₜ = (3k-1)⁄(3-k) bₜ₋₁ + (1-k)⁄(3-k) (Qₜ + Qₜ₋₁)
 
-        b_{t}=\\left[\\frac{3k-1}{3-k}\\right]b_{t-1}+\\left[\\frac{1-k}{3-k}\\right]\\left(Q_{t}+Q_{t-1}\\right)
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
+        k = groundwater recession constant
 
     Parameters
     ----------
@@ -255,9 +293,9 @@ def chapman(
 
     References
     ----------
-    .. [1]  Chapman T. (1991) - Comment on evaluation of automated techniques
-       for base flow and recession analyses, by RJ Nathan and TA McMahon. Water
-       Resources Research, 27(7), pp. 1783-1784.
+    .. [1]  Chapman T. (1991) - Comment on evaluation of automated
+       techniques for base flow and recession analyses, by RJ Nathan and TA
+       McMahon. Water Resources Research, 27(7), pp. 1783-1784.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -296,12 +334,15 @@ def chapman_maxwell(
     print_input=False,
 ):
     """Digital filter (Chapman and Maxwell, 1996)
-
     ::
 
-     |          1 - k           k
-     |   b    = -----  Q   +  -----  b
-     |     i    2 - k   i     2 - k    (i-1)
+        bₜ = k⁄(2-k) bₜ₋₁ + (1-k)⁄(2-k) Qₜ
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
+        k = groundwater recession constant
 
     Parameters
     ----------
@@ -360,15 +401,13 @@ def eckhardt(
     print_input=False,
 ):
     """Eckhardt filter (Eckhardt, 2005)
-
-    .. math::
-
-        b_t = \\frac{(1-BFI_{max})\\space k\\space b_{t-1} + (1-k) \\space BFI_{max} \\space Q_t}{1-k \\space BFI_{max}}
-
     ::
 
-        b = baseflow
-        Q = streamflow
+        bₜ = [(1 - BFIₘₐₓ) k bₜ₋₁ + (1 - k) BFIₘₐₓ Qₜ]⁄[1 - (k BFIₘₐₓ)]
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
         k = groundwater recession constant
         BFI_{max} = long-term ratio of baseflow to total streamflow
                  [values between 0 and 1]
@@ -550,26 +589,25 @@ def furey(
     print_input=False,
 ):
     """
-    Furey digital filter (Furey and Gupta, 2001, 2003)
+    Furey digital filter [Furey and Gupta, 2001]
 
     This hydrograph separation filter, introduced in 2001, is based on a mass
     balance equation for baseflow through a hillside, and its construction is
     founded on a physical-statistical theory of low streamflows developed by
     Furey and Gupta.
 
-    .. math::
-
-        b_t = (k)b_{t-1} + (1-k)C(Q_{t-1}-b_{t-1})
-
     ::
 
-        b = baseflow
-        Q = streamflow
-        t = the time (e.g. day) for which the baseflow is calculated
+        bₜ = k bₜ₋₁ + (1-k) c3c1 (Qₜ₋₁ - bₜ₋₁)
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ₋₁ = total stream flow for the previous day
         k = recession constant [values between 0 and 1]
-        C = ratio of overland flow to groundwater flow, sometimes expressed as
-        c3/c1 where c3 is the ratio of groundwater recharge to precipitation
-        and c1 is the ratio of overland flow to precipitation.
+        c3c1 = ratio of overland flow to groundwater flow, sometimes expressed
+               as c3/c1 where c3 is the ratio of groundwater recharge to
+               precipitation and c1 is the ratio of overland flow to
+               precipitation.
 
     Parameters
     ----------
@@ -599,9 +637,9 @@ def furey(
 
     References
     ----------
-    .. [1] Furey, P. R., and V. K. Gupta. 2001. A physically based filter for
-           separating base flow from streamflow time series, Water Resour.
-           Res., 37(11), 2709–2722
+    .. [Furey and Gupta, 2001] Furey, P. R., and V. K. Gupta. 2001.
+       A physically based filter for separating base flow from streamflow time
+       series, Water Resour. Res., 37(11), 2709–2722
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -640,11 +678,16 @@ def lyne_hollick(
     print_input=False,
 ):
     """
-    Digital filter (Lyne and Hollick, 1979)[1]_
+    Digital filter [1]_
+    ::
 
-    .. math::
+        bₜ = α bₜ₋₁ + (1-α)⁄2 (Qₜ + Qₜ₋₁)
 
-        b_{t}=a b_{t-1}+\\left[\\frac{1-a}{2}\\right]\\left(Q_{t}+Q_{t-1}\\right)
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
+        α = recession constant [values between 0 and 1]
 
     Parameters
     ----------
@@ -669,8 +712,8 @@ def lyne_hollick(
     References
     ----------
     .. [1] Lyne V., Hollick M. (1979) - Stochastic time-variable
-        rainfall-runoff modelling. Institute of Engineers Australia National
-        Conference. Publ. 79/10, pp. 89-93.
+       rainfall-runoff modelling. Institute of Engineers Australia National
+       Conference. Publ. 79/10, pp. 89-93.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -773,6 +816,17 @@ def ihacres(
 ):
     """IHACRES
 
+    Jakeman-Hornberger digital filter [1]_
+
+    ::
+
+        bₜ = k/(1 + C) bₜ₋₁ + C⁄(1 + C) (Qₜ + a Qₜ₋₁)
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
+
     Parameters
     ----------
     k : float
@@ -799,6 +853,12 @@ def ihacres(
     ${target_units}
     ${print_input}
     ${tablefmt}
+
+    References
+    ----------
+    .. [1] Jakeman, A. J., and G. M.Hornberger
+       (1993), How much complexity is warranted in a rainfall-runoff model?,
+       Water Resour. Res., 29(8), 2637–2649, doi:10.1029/93WR00877.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -961,6 +1021,15 @@ def willems(
     print_input=False,
 ):
     """Digital filter (Willems, 2009)
+    ::
+
+        v = (1 - w) * (1 - k) / (2 * w)
+        bₜ = (k - v)/(1 + v) bₜ₋₁ + v⁄(1 + v) (Qₜ + Qₜ₋₁)
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
 
     Parameters
     ----------
