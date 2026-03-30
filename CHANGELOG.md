@@ -1,3 +1,9 @@
+## v2.2.0 (2026-03-29)
+
+### Feat
+
+- moved to using scipy lfilter for most baseflow_sep filters, better separation between API and CLI
+
 ## v2.1.0 (2026-03-19)
 
 ### Feat
