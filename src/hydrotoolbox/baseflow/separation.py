@@ -37,6 +37,7 @@ def separation(
     C=None,
     a=None,
     bfi_max=None,
+    passes=1,
 ):
     if method == "all":
         method = [
@@ -76,7 +77,7 @@ def separation(
             "furey",
             "willems",
         ]:
-            b_lh = lyne_hollick(Q, k=k)[0]
+            b_lh = lyne_hollick(Q, k=k, passes=passes)[0]
 
         if m == "ukih":
             b[m] = ukih(Q, b_lh)
@@ -91,7 +92,7 @@ def separation(
             b[m] = slide(Q, area=area, num_days=num_days)
 
         if m == "lyne_hollick":
-            b[m] = lyne_hollick(Q, k=k)[0]
+            b[m] = lyne_hollick(Q, k=k, passes=passes)[0]
 
         if m == "chapman":
             b[m] = chapman(Q, k)[0]

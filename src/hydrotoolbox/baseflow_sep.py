@@ -104,6 +104,7 @@ def bfsep(
     C=None,
     a=None,
     bfi_max=None,
+    passes=1,
 ):
     complete_index = pd.date_range(start=flow.index[0], end=flow.index[-1], freq="D")
     flow = flow.reindex(complete_index, fill_value=np.nan)
@@ -154,6 +155,7 @@ def bfsep(
                 C=C,
                 a=a,
                 bfi_max=bfi_max,
+                passes=passes,
             )[bfi],
             index=ncol.index,
         )
@@ -664,6 +666,7 @@ def furey(
 def lyne_hollick(
     input_ts="-",
     alpha=0.925,
+    passes=1,
     columns=None,
     source_units=None,
     start_date=None,
@@ -696,6 +699,8 @@ def lyne_hollick(
     ${columns}
     alpha
         Catchment constant (value between 0 and 1).  Default is 0.925.
+    passes : int
+        The number of passes to use for the filter.
     ${source_units}
     ${start_date}
     ${end_date}
@@ -731,7 +736,7 @@ def lyne_hollick(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "lyne_hollick", print_input, k=alpha)
+    return bfsep(flow, "lyne_hollick", print_input, k=alpha, passes=passes)
 
 
 @tsutils.doc(tsutils.docstrings)
