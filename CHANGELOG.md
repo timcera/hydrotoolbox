@@ -1,3 +1,9 @@
+## v2.3.0 (2026-06-09)
+
+### Feat
+
+- add "passes" to Lynne Hollick function
+
 ## v2.2.0 (2026-03-29)
 
 ### Feat
