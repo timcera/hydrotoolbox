@@ -1,143 +1,58 @@
+# Standard library imports
+import inspect
+
+# Third party imports
 import numpy as np
 
+# Local folder imports
+from . import methods
 from .comparison import KGE, strict_baseflow
-from .methods import (
-    boughton,
-    chapman,
-    chapman_maxwell,
-    eckhardt,
-    ewma,
-    f_Boughton,
-    f_Eckhardt,
-    f_Furey,
-    f_Willems,
-    five_day,
-    fixed,
-    furey,
-    ihacres,
-    local,
-    lyne_hollick,
-    slide,
-    strict,
-    ukih,
-    willems,
-)
-from .param_estimate import param_calibrate, recession_coefficient
+from .param_estimate import recession_coefficient
+
+ALL_METHODS = [
+    "ukih",
+    "usgs_hysep_local",
+    "usgs_hysep_fixed",
+    "usgs_hysep_slide",
+    "lyne_hollick",
+    "chapman",
+    "chapman_maxwell",
+    "boughton",
+    "furey",
+    "eckhardt",
+    "ewma",
+    "willems",
+    "ihacres",
+    "five_day",
+]
 
 
-def separation(
-    Q,
-    date=None,
-    num_days=None,
-    area=None,
-    ice_period=None,
-    method="all",
-    k=None,
-    c3c1=None,
-    C=None,
-    a=None,
-    bfi_max=None,
-    passes=1,
-):
+def separation(Q, method="all", **params):
+    """Run one or more baseflow methods on Q and score them with KGE.
+
+    Parameters that are None or that a method does not accept are ignored,
+    except that an explicit None for b0_method is rejected by the method.
+    One set of parameters can be shared by every method.
+    """
     if method == "all":
-        method = [
-            "ukih",
-            "local",
-            "fixed",
-            "slide",
-            "lyne_hollick",
-            "chapman",
-            "chapman_maxwell",
-            "boughton",
-            "furey",
-            "eckhardt",
-            "ewma",
-            "willems",
-            "ihacres",
-            "strict",
-            "five_day",
-        ]
+        method = ALL_METHODS
     elif isinstance(method, str):
         method = [method]
 
     strict_bf = strict_baseflow(Q)
+    if params.get("k") is None:
+        params["k"] = float(recession_coefficient(Q, strict_bf))
 
     b = np.recarray(Q.shape[0], dtype=list(zip(method, [float] * len(method))))
-
-    if k is None:
-        k = recession_coefficient(Q, strict_bf, date, ice_period)
-    k = float(k)
-
     for m in method:
-        if m in [
-            "ukih",
-            "local",
-            "chapman_maxwell",
-            "ewma",
-            "furey",
-            "willems",
-        ]:
-            b_lh = lyne_hollick(Q, k=k, passes=passes)[0]
-
-        if m == "ukih":
-            b[m] = ukih(Q, b_lh)
-
-        if m == "local":
-            b[m] = local(Q, b_lh, area=area, num_days=num_days)
-
-        if m == "fixed":
-            b[m] = fixed(Q, area=area, num_days=num_days)
-
-        if m == "slide":
-            b[m] = slide(Q, area=area, num_days=num_days)
-
-        if m == "lyne_hollick":
-            b[m] = lyne_hollick(Q, k=k, passes=passes)[0]
-
-        if m == "chapman":
-            b[m] = chapman(Q, k)[0]
-
-        if m == "chapman_maxwell":
-            b[m] = chapman_maxwell(Q, k)[0]
-
-        if m == "boughton":
-            if C is None:
-                C = param_calibrate(
-                    np.arange(0.0001, 1, 0.0001), f_Boughton(k), Q, b_lh
-                )
-            C = float(C)
-            b[m] = boughton(Q, k, C)[0]
-
-        if m == "furey":
-            if c3c1 is None:
-                c3c1 = param_calibrate(np.arange(0.001, 10, 0.001), f_Furey(k), Q, b_lh)
-            c3c1 = float(c3c1)
-            b[m] = furey(Q, b_lh, k, c3c1)[0]
-
-        if m == "eckhardt":
-            if bfi_max is None:
-                bfi_max = param_calibrate(
-                    np.arange(0.0001, 1, 0.0001), f_Eckhardt(k), Q, b_lh
-                )
-            bfi_max = float(bfi_max)
-            b[m] = eckhardt(Q, k, bfi_max)[0]
-
-        if m == "ewma":
-            e = param_calibrate(np.arange(0.0001, 0.5, 0.0001), ewma, Q, b_lh)
-            b[m] = ewma(Q, b_lh, e)[0]
-
-        if m == "willems":
-            w = param_calibrate(np.arange(0.0001, 1, 0.0001), f_Willems(k), Q, b_lh)
-            b[m] = willems(Q, b_lh, k, w)[0]
-
-        if m == "ihacres":
-            b[m] = ihacres(Q, k=k, C=C, a=a)[0]
-
-        if m == "strict":
-            b[m] = strict(Q)
-
-        if m == "five_day":
-            b[m] = five_day(Q)
+        func = getattr(methods, m)
+        accepted = inspect.signature(func).parameters
+        kwargs = {
+            key: val
+            for key, val in params.items()
+            if key in accepted and (val is not None or key == "b0_method")
+        }
+        b[m] = func(Q, **kwargs)
 
     KGEs = KGE(
         b[strict_bf].view(np.float64).reshape(-1, len(method)),

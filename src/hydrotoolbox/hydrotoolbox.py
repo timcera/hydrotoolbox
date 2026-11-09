@@ -17,6 +17,7 @@ __all__ = [
     "storm_events",
 ]
 
+# Standard library imports
 import datetime
 import itertools
 import os.path
@@ -26,19 +27,17 @@ import warnings
 from argparse import RawTextHelpFormatter
 from typing import Literal
 
+# Third party imports
 import numpy as np
 import pandas as pd
-
-try:
-    from pydantic import validate_call
-except ImportError:
-    from pydantic import validate_arguments as validate_call
-
+from pydantic import validate_call
 from scipy.signal import find_peaks
 
+# First party imports
 from hydrotoolbox import baseflow_sep
 from hydrotoolbox.baseflow.comparison import strict_baseflow
 from hydrotoolbox.baseflow.param_estimate import recession_coefficient
+from hydrotoolbox.baseflow.utils import BaseflowInitialMethod
 from hydrotoolbox.indices import indices as ind
 from hydrotoolbox.toolbox_utils.src.toolbox_utils import tsutils
 
@@ -57,8 +56,6 @@ def natural_keys(text):
 
 @tsutils.doc(tsutils.docstrings)
 def recession(
-    date=None,
-    ice_period=None,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -77,10 +74,6 @@ def recession(
 
     Parameters
     ----------
-    date
-        Date term
-    ice_period
-        Period of ice that changes the discharge relationship
     input_ts
         Streamflow
     ${columns}
@@ -94,6 +87,11 @@ def recession(
     ${index_type}
     ${names}
     ${target_units}
+
+    Returns
+    -------
+    dict
+        Column names mapped to lists containing their recession coefficients.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -115,7 +113,7 @@ def recession(
     for col in flow.columns:
         val = flow.loc[:, col].astype("float64").values
         strict = strict_baseflow(val)
-        rc[col] = [recession_coefficient(val, strict, date, ice_period)]
+        rc[col] = [recession_coefficient(val, strict)]
     return rc
 
 
@@ -156,6 +154,11 @@ def flow_duration(
     ${index_type}
     ${names}
     ${target_units}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Flow quantiles indexed by exceedance probability.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -232,6 +235,11 @@ def storm_events(
     ${index_type}
     ${names}
     ${target_units}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Input observations around the detected storm peaks.
     """
     if rise_lag < 0 or fall_lag < 0:
         raise ValueError("rise_lag and fall_lag must be greater than 0.")
@@ -262,7 +270,7 @@ def storm_events(
         collected.update(
             range(peak - int(float(rise_lag)), peak + int(float(fall_lag)) + 1)
         )
-    index = sorted(list(collected))
+    index = sorted(collected)
     ndf = pd.DataFrame(flow.iloc[index, 0])
     ndf.columns = flow.columns
     return ndf
@@ -673,6 +681,11 @@ def indices(
     ${names}
     ${target_units}
     ${print_input}
+
+    Returns
+    -------
+    dict
+        Hydrologic index codes and descriptions mapped to calculated values.
     """
 
     indice_codes = list(indice_codes)
@@ -1101,6 +1114,11 @@ def exceedance_time(
     ${names}
     ${target_units}
     ${print_input}
+
+    Returns
+    -------
+    dict
+        Thresholds mapped to their exceedance times in the requested units.
     """
     series = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -1177,7 +1195,7 @@ def exceedance_time(
                     / (series[index] - series[previous_index])
                     * delta
                 )
-            elif bool(previous_value) and not bool(value):
+            elif bool(previous_value):
                 accum += (
                     (series[previous_index] - flow)
                     / (series[previous_index] - series[index])
@@ -1202,6 +1220,7 @@ def main():
     if not os.path.exists("debug_hydrotoolbox"):
         sys.tracebacklimit = 1
 
+    # Third party imports
     from cltoolbox import Program
 
     program = Program("hydrotoolbox", "0.0")
@@ -1228,6 +1247,7 @@ The format for floating point numbers in the output table."""
     @program.arg("float_format", help=float_format_docstring)
     @tsutils.copy_doc(exceedance_time)
     def _exceedance_time_cli(
+        *thresholds,
         input_ts="-",
         delays=0,
         under_over="over",
@@ -1245,9 +1265,9 @@ The format for floating point numbers in the output table."""
         target_units=None,
         tablefmt="csv_nos",
         float_format=".3f",
-        *thresholds,
     ):
         ans = exceedance_time(
+            *thresholds,
             input_ts=input_ts,
             delays=delays,
             under_over=under_over,
@@ -1263,7 +1283,6 @@ The format for floating point numbers in the output table."""
             index_type=index_type,
             names=names,
             target_units=target_units,
-            *thresholds,
         )
         ans = list(ans.items())
         tsutils.printiso(
@@ -1293,6 +1312,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
         """Boughton double-parameter filter (Boughton, 2004)"""
         tsutils.printiso(
@@ -1310,6 +1330,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
             float_format=float_format,
@@ -1336,29 +1357,9 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
-        """
-        Chapman filter (Chapman, 1991)
-
-        Parameters
-        ----------
-        {k}
-        input_ts
-            Streamflow
-        ${columns}
-        ${source_units}
-        ${start_date}
-        ${end_date}
-        ${dropna}
-        ${clean}
-        ${round_index}
-        ${skiprows}
-        ${index_type}
-        ${names}
-        ${target_units}
-        ${print_input}
-        ${tablefmt}
-        """
+        """Chapman filter (Chapman, 1991)"""
         tsutils.printiso(
             baseflow_sep.chapman(
                 k=k,
@@ -1375,6 +1376,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
             float_format=float_format,
@@ -1403,6 +1405,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
         """Digital filter (Chapman and Maxwell, 1996)"""
         tsutils.printiso(
@@ -1421,6 +1424,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
             float_format=float_format,
@@ -1448,28 +1452,9 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
-        """
-        Eckhardt filter (Eckhardt, 2005)
-
-        Parameters
-        ----------
-        input_ts
-            Streamflow
-        ${columns}
-        ${source_units}
-        ${start_date}
-        ${end_date}
-        ${dropna}
-        ${clean}
-        ${round_index}
-        ${skiprows}
-        ${index_type}
-        ${names}
-        ${target_units}
-        ${print_input}
-        ${tablefmt}
-        """
+        """Eckhardt filter (Eckhardt, 2005)"""
         tsutils.printiso(
             baseflow_sep.eckhardt(
                 input_ts=input_ts,
@@ -1487,6 +1472,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
             float_format=float_format,
@@ -1512,6 +1498,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "LH",
     ):
         tsutils.printiso(
             baseflow_sep.ewma(
@@ -1528,6 +1515,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
         )
@@ -1594,6 +1582,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "Q0",
     ):
         tsutils.printiso(
             baseflow_sep.furey(
@@ -1612,48 +1601,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
-            ),
-            tablefmt=tablefmt,
-        )
-
-    @program.baseflow_sep.command("lyne_hollick", formatter_class=RawTextHelpFormatter)
-    @program.arg("tablefmt", help=tablefmt_docstring)
-    @program.arg("float_format", help=float_format_docstring)
-    @tsutils.copy_doc(baseflow_sep.lyne_hollick)
-    def _lyne_hollick_cli(
-        input_ts="-",
-        alpha=0.925,
-        columns=None,
-        source_units=None,
-        start_date=None,
-        end_date=None,
-        dropna="no",
-        clean=False,
-        round_index=None,
-        skiprows=None,
-        index_type="datetime",
-        names=None,
-        target_units=None,
-        print_input=False,
-        tablefmt="csv",
-        float_format="g",
-    ):
-        tsutils.printiso(
-            baseflow_sep.lyne_hollick(
-                input_ts=input_ts,
-                alpha=alpha,
-                columns=columns,
-                source_units=source_units,
-                start_date=start_date,
-                end_date=end_date,
-                dropna=dropna,
-                clean=clean,
-                round_index=round_index,
-                skiprows=skiprows,
-                index_type=index_type,
-                names=names,
-                target_units=target_units,
-                print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
         )
@@ -1663,9 +1611,9 @@ The format for floating point numbers in the output table."""
     @program.arg("float_format", help=float_format_docstring)
     @tsutils.copy_doc(baseflow_sep.ihacres)
     def _ihacres_cli(
-        k,
-        C,
-        a,
+        k=None,
+        C=None,
+        a=None,
         input_ts="-",
         columns=None,
         source_units=None,
@@ -1681,6 +1629,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
         tsutils.printiso(
             baseflow_sep.ihacres(
@@ -1700,6 +1649,53 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
+            ),
+            tablefmt=tablefmt,
+        )
+
+    @program.baseflow_sep.command("lyne_hollick", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.lyne_hollick)
+    def _lyne_hollick_cli(
+        input_ts="-",
+        alpha=0.925,
+        passes=1,
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
+    ):
+        tsutils.printiso(
+            baseflow_sep.lyne_hollick(
+                input_ts=input_ts,
+                alpha=alpha,
+                passes=passes,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
         )
@@ -1724,6 +1720,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
         tsutils.printiso(
             baseflow_sep.ukih(
@@ -1740,46 +1737,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
-            ),
-            tablefmt=tablefmt,
-        )
-
-    @program.baseflow_sep.command("willems", formatter_class=RawTextHelpFormatter)
-    @program.arg("tablefmt", help=tablefmt_docstring)
-    @program.arg("float_format", help=float_format_docstring)
-    @tsutils.copy_doc(baseflow_sep.willems)
-    def _willems_cli(
-        input_ts="-",
-        columns=None,
-        source_units=None,
-        start_date=None,
-        end_date=None,
-        dropna="no",
-        clean=False,
-        round_index=None,
-        skiprows=None,
-        index_type="datetime",
-        names=None,
-        target_units=None,
-        print_input=False,
-        tablefmt="csv",
-        float_format="g",
-    ):
-        tsutils.printiso(
-            baseflow_sep.willems(
-                input_ts=input_ts,
-                columns=columns,
-                source_units=source_units,
-                start_date=start_date,
-                end_date=end_date,
-                dropna=dropna,
-                clean=clean,
-                round_index=round_index,
-                skiprows=skiprows,
-                index_type=index_type,
-                names=names,
-                target_units=target_units,
-                print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
         )
@@ -1854,6 +1812,7 @@ The format for floating point numbers in the output table."""
         print_input=False,
         tablefmt="csv",
         float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
     ):
         tsutils.printiso(
             baseflow_sep.usgs_hysep_local(
@@ -1872,6 +1831,7 @@ The format for floating point numbers in the output table."""
                 names=names,
                 target_units=target_units,
                 print_input=print_input,
+                b0_method=b0_method,
             ),
             tablefmt=tablefmt,
         )
@@ -1922,70 +1882,53 @@ The format for floating point numbers in the output table."""
             tablefmt=tablefmt,
         )
 
-    # @program.baseflow_sep.command("strict", formatter_class=RawTextHelpFormatter)
-    # @tsutils.copy_doc(baseflow_sep.strict)
-    # def _strict_cli(
-    #     input_ts="-",
-    #     columns=None,
-    #     source_units=None,
-    #     start_date=None,
-    #     end_date=None,
-    #     dropna="no",
-    #     clean=False,
-    #     round_index=None,
-    #     skiprows=None,
-    #     index_type="datetime",
-    #     names=None,
-    #     target_units=None,
-    #     print_input=False,
-    #     tablefmt="csv",
-    # ):
-    #     """
-    #     Return "strict" baseflow.
-    #
-    #     Parameters
-    #     ----------
-    #     ${input_ts}
-    #     ${columns}
-    #     ${source_units}
-    #     ${start_date}
-    #     ${end_date}
-    #     ${dropna}
-    #     ${clean}
-    #     ${round_index}
-    #     ${skiprows}
-    #     ${index_type}
-    #     ${names}
-    #     ${target_units}
-    #     ${print_input}
-    #     ${tablefmt}
-    #     """
-    #     tsutils.printiso(
-    #         baseflow_sep.strict(
-    #             input_ts=input_ts,
-    #             columns=columns,
-    #             source_units=source_units,
-    #             start_date=start_date,
-    #             end_date=end_date,
-    #             dropna=dropna,
-    #             clean=clean,
-    #             round_index=round_index,
-    #             skiprows=skiprows,
-    #             index_type=index_type,
-    #             names=names,
-    #             target_units=target_units,
-    #             print_input=print_input,
-    #         ),
-    #         tablefmt=tablefmt,
-    #     )
+    @program.baseflow_sep.command("willems", formatter_class=RawTextHelpFormatter)
+    @program.arg("tablefmt", help=tablefmt_docstring)
+    @program.arg("float_format", help=float_format_docstring)
+    @tsutils.copy_doc(baseflow_sep.willems)
+    def _willems_cli(
+        input_ts="-",
+        columns=None,
+        source_units=None,
+        start_date=None,
+        end_date=None,
+        dropna="no",
+        clean=False,
+        round_index=None,
+        skiprows=None,
+        index_type="datetime",
+        names=None,
+        target_units=None,
+        print_input=False,
+        tablefmt="csv",
+        float_format="g",
+        b0_method: BaseflowInitialMethod = "zi",
+    ):
+        tsutils.printiso(
+            baseflow_sep.willems(
+                input_ts=input_ts,
+                columns=columns,
+                source_units=source_units,
+                start_date=start_date,
+                end_date=end_date,
+                dropna=dropna,
+                clean=clean,
+                round_index=round_index,
+                skiprows=skiprows,
+                index_type=index_type,
+                names=names,
+                target_units=target_units,
+                print_input=print_input,
+                b0_method=b0_method,
+            ),
+            tablefmt=tablefmt,
+        )
 
     @program.command("recession", formatter_class=RawTextHelpFormatter)
     @program.arg("tablefmt", help=tablefmt_docstring)
     @program.arg("float_format", help=float_format_docstring)
     @tsutils.copy_doc(recession)
     def _recession_cli(
-        date=None,
-        ice_period=None,
         input_ts="-",
         columns=None,
         source_units=None,
@@ -2003,8 +1946,6 @@ The format for floating point numbers in the output table."""
     ):
         tsutils.printiso(
             recession(
-                date=date,
-                ice_period=ice_period,
                 input_ts=input_ts,
                 columns=columns,
                 source_units=source_units,

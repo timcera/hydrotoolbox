@@ -7,11 +7,6 @@ Help::
 
     hydrotoolbox --help
 
-about
-~~~~~
-.. program-output:: hydrotoolbox about --help
-   :prompt:
-
 baseflow_sep
 ~~~~~~~~~~~~
 .. program-output:: hydrotoolbox baseflow_sep --help
@@ -87,19 +82,14 @@ baseflow_sep willems
 .. program-output:: hydrotoolbox baseflow_sep willems --help
    :prompt:
 
+about
+~~~~~
+.. program-output:: hydrotoolbox about --help
+   :prompt:
+
 exceedance_time
 ~~~~~~~~~~~~~~~
 .. program-output:: hydrotoolbox exceedance_time --help
-   :prompt:
-
-flow_duration
-~~~~~~~~~~~~~
-.. program-output:: hydrotoolbox flow_duration --help
-   :prompt:
-
-indices
-~~~~~~~
-.. program-output:: hydrotoolbox indices --help
    :prompt:
 
 recession
@@ -107,7 +97,17 @@ recession
 .. program-output:: hydrotoolbox recession --help
    :prompt:
 
+flow_duration
+~~~~~~~~~~~~~
+.. program-output:: hydrotoolbox flow_duration --help
+   :prompt:
+
 storm_events
 ~~~~~~~~~~~~
 .. program-output:: hydrotoolbox storm_events --help
+   :prompt:
+
+indices
+~~~~~~~
+.. program-output:: hydrotoolbox indices --help
    :prompt:

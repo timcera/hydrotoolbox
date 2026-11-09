@@ -5,33 +5,29 @@ __all__ = [
     "eckhardt",
     "ewma",
     "five_day",
-    "fixed",
     "furey",
     "ihacres",
     "lyne_hollick",
-    "local",
-    "slide",
     "strict",
     "ukih",
+    "usgs_hysep_fixed",
+    "usgs_hysep_local",
+    "usgs_hysep_slide",
     "willems",
-    "f_Boughton",
-    "f_Eckhardt",
-    "f_Furey",
-    "f_Willems",
 ]
 
-from .boughton import boughton, f_Boughton
+# Local folder imports
+from .boughton import boughton
 from .chapman import chapman
 from .chapman_maxwell import chapman_maxwell
-from .eckhardt import eckhardt, f_Eckhardt
+from .eckhardt import eckhardt
 from .ewma import ewma
 from .five_day import five_day
-from .fixed import fixed
-from .furey import f_Furey, furey
+from .furey import furey
 from .ihacres import ihacres
-from .local import local
 from .lyne_hollick import lyne_hollick
-from .slide import slide
-from .strict import strict
 from .ukih import ukih
-from .willems import f_Willems, willems
+from .usgs_hysep_fixed import usgs_hysep_fixed
+from .usgs_hysep_local import usgs_hysep_local
+from .usgs_hysep_slide import usgs_hysep_slide
+from .willems import willems

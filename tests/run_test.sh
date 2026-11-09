@@ -15,7 +15,7 @@ time hydrotoolbox baseflow_sep eckhardt --print_input < example.csv > example_ec
 plottoolbox time --start_date 2018-01-01 --ofilename eckhardt.png < example_eckhardt.csv
 
 echo "ihacres"
-time hydrotoolbox baseflow_sep ihacres 0.9 0.9 0.9 --print_input < example.csv > example_ihacres.csv
+time hydrotoolbox baseflow_sep ihacres -k 0.9 -C 0.9 -a 0.9 --print_input < example.csv > example_ihacres.csv
 plottoolbox time --start_date 2018-01-01 --ofilename ihacres.png < example_ihacres.csv
 
 echo "ewma"
@@ -54,9 +54,9 @@ echo "five_day"
 time hydrotoolbox baseflow_sep five_day --print_input < example.csv > example_five_day.csv
 plottoolbox time --start_date 2018-01-01 --ofilename five_day.png < example_five_day.csv
 
-echo "strict"
-time hydrotoolbox baseflow_sep strict --print_input < example.csv > example_strict.csv
-plottoolbox time --start_date 2018-01-01 --ofilename strict.png < example_strict.csv
+# echo "strict"
+# time hydrotoolbox baseflow_sep strict --print_input < example.csv > example_strict.csv
+# plottoolbox time --start_date 2018-01-01 --ofilename strict.png < example_strict.csv
 
 echo "boughton"
 time hydrotoolbox baseflow_sep boughton --print_input < example.csv > example_boughton.csv

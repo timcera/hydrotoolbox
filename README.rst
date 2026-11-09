@@ -29,6 +29,21 @@ The hydrotoolbox is a Python script for hydrologic calculations and analysis
 or by function calls within Python.  Uses pandas (http://pandas.pydata.org/)
 or numpy (http://numpy.scipy.org) for any heavy lifting.
 
+The "baseflow_sep" code is based on the work of Xie et al. (2024) and
+Xie et al. (2020), from the code repository at
+https://github.com/xiejx5/baseflow.  It was refactored to not use numba, and
+instead use scipy.signal.lfilter where possible, and to be more modular.
+
+    Xie, J., Liu, X., Jasechko, S., Berghuijs, W. R., Wang, K., Liu, C.,
+    Reichstein, M., Jung, M., & Koirala, S. (2024). Majority of global river
+    flow sustained by groundwater. Nature Geoscience, 17(8), 770–777.
+    https://doi.org/10.1038/s41561-024-01483-5
+
+    Xie, J., Liu, X., Wang, K., Yang, T., Liang, K., & Liu, C. (2020).
+    Evaluation of typical methods for baseflow separation in the contiguous
+    United States. Journal of Hydrology, 583, 124628.
+    https://doi.org/10.1016/j.jhydrol.2020.124628
+
 Requirements
 ------------
 * python 3.10 or higher

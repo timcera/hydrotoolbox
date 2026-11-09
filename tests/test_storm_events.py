@@ -1,7 +1,9 @@
+# Third party imports
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+# First party imports
 from hydrotoolbox import storm_events
 
 

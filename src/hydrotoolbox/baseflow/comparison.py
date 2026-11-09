@@ -3,6 +3,7 @@ __all__ = [
     "strict_baseflow",
 ]
 
+# Third party imports
 import numpy as np
 
 
@@ -37,23 +38,41 @@ def strict_baseflow(Q):
 
 
 def KGE(simulations, evaluation):
-    """Original Kling-Gupta Efficiency (KGE) and its three components
-    (r, α, β) as per `Gupta et al., 2009
+    """Calculate original Kling-Gupta Efficiency (KGE).
+
+    The KGE and its components (r, α, β) follow `Gupta et al., 2009
     <https://doi.org/10.1016/j.jhydrol.2009.08.003>`_.
-    Note, all four values KGE, r, α, β are returned, in this order.
-    :Calculation Details:
-        .. math::
-           E_{\\text{KGE}} = 1 - \\sqrt{[r - 1]^2 + [\\alpha - 1]^2
-           + [\\beta - 1]^2}
-        .. math::
-           r = \\frac{\\text{cov}(e, s)}{\\sigma({e}) \\cdot \\sigma(s)}
-        .. math::
-           \\alpha = \\frac{\\sigma(s)}{\\sigma(e)}
-        .. math::
-           \\beta = \\frac{\\mu(s)}{\\mu(e)}
-        where *e* is the *evaluation* series, *s* is (one of) the
-        *simulations* series, *cov* is the covariance, *σ* is the
-        standard deviation, and *μ* is the arithmetic mean.
+
+    Parameters
+    ----------
+    simulations : array_like
+        Simulated values, with time along the first axis.
+    evaluation : array_like
+        Observed values, with time along the first axis.
+
+    Returns
+    -------
+    float or ndarray
+        KGE for each series.
+
+    Notes
+    -----
+    .. math::
+       E_{\\text{KGE}} = 1 - \\sqrt{[r - 1]^2 + [\\alpha - 1]^2
+       + [\\beta - 1]^2}
+
+    .. math::
+       r = \\frac{\\text{cov}(e, s)}{\\sigma({e}) \\cdot \\sigma(s)}
+
+    .. math::
+       \\alpha = \\frac{\\sigma(s)}{\\sigma(e)}
+
+    .. math::
+       \\beta = \\frac{\\mu(s)}{\\mu(e)}
+
+    Here *e* is the *evaluation* series, *s* is (one of) the
+    *simulations* series, *cov* is the covariance, *σ* is the
+    standard deviation, and *μ* is the arithmetic mean.
     """
     # calculate error in timing and dynamics r
     # (Pearson's correlation coefficient)

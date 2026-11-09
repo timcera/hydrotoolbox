@@ -1,18 +1,30 @@
 __all__ = [
-    "slide",
+    "usgs_hysep_slide",
 ]
 
+# Third party imports
 import numpy as np
 
-from hydrotoolbox.baseflow.methods.local import hysep_interval
+# First party imports
+from hydrotoolbox.baseflow.methods.usgs_hysep_local import hysep_interval
 
 
-def slide(Q, area=None, num_days=None):
-    """Slide interval graphical method from HYSEP program (Sloto & Crouse, 1996)
+def usgs_hysep_slide(Q, area=None, num_days=None):
+    """Sliding interval graphical method from HYSEP (Sloto & Crouse, 1996).
 
-    Args:
-        Q (np.array): streamflow
-        area (float): basin area in km^2
+    Parameters
+    ----------
+    Q : ndarray
+        Streamflow.
+    area : float, optional
+        Basin area in square kilometers.
+    num_days : int, optional
+        Override the interval calculated from the basin area.
+
+    Returns
+    -------
+    ndarray
+        Separated baseflow.
     """
     inN = hysep_interval(area=area, num_days=num_days)
     return slide_interpolation(Q, inN)

@@ -1,58 +1,98 @@
-__all__ = [
-    "recession_coefficient",
-    "recession_period",
-]
-
+# Third party imports
 import numpy as np
 
-from hydrotoolbox.baseflow.utils import NSE, moving_average, multi_arange
+# First party imports
+from hydrotoolbox.baseflow.comparison import strict_baseflow
+from hydrotoolbox.baseflow.utils import (
+    NSE,
+    BaseflowInitialMethod,
+    _init_baseflow,
+    moving_average,
+    multi_arange,
+)
 
 
-def recession_coefficient(Q, strict, date=None, ice_period=None):
-    if ice_period is None:
-        idx_ice = np.full(Q.shape, False)
-    else:
-        beg, end = ice_period
-        if (end[0] > beg[0]) or ((end[0] == beg[0]) & (end[1] > beg[1])):
-            idx_ice = (
-                (date.M > beg[0]) & (date.M < end[0])
-                | ((date.M == beg[0]) & (date.D >= beg[1]))
-                | ((date.M == end[0]) & (date.D <= end[1]))
-            )
-        else:
-            idx_ice = (
-                (date.M > beg[0])
-                | (date.M < end[0])
-                | ((date.M == beg[0]) & (date.D >= beg[1]))
-                | ((date.M == end[0]) & (date.D <= end[1]))
-            )
-    dry = strict[~idx_ice]
-
-    cQ = Q[1:-1][dry[1:-1]]
-    dQ = ((Q[2:] - Q[:-2]) / 2)[dry[1:-1]]
+def recession_coefficient(Q, strict):
+    cQ, dQ = Q[1:-1], (Q[2:] - Q[:-2]) / 2
+    cQ, dQ = cQ[strict[1:-1]], dQ[strict[1:-1]]
 
     idx = np.argsort(-dQ / cQ)[np.floor(dQ.shape[0] * 0.05).astype(int)]
     K = -cQ[idx] / dQ[idx]
     return np.exp(-1 / K)
 
 
-def param_calibrate(param_range, method, Q, b_LH=0):
-    idx_rec = recession_period(Q)
-    idx_oth = np.full(Q.shape[0], True)
-    idx_oth[idx_rec] = False
-    return param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth)
+def resolve_k(flow, k):
+    """Return k, estimating the recession coefficient from flow if None."""
+    if k is None:
+        return float(recession_coefficient(flow, strict_baseflow(flow)))
+    return float(k)
 
 
-def param_calibrate_jit(param_range, method, Q, b_LH, idx_rec, idx_oth):
-    log_q = np.log(Q + 1)
+def param_calibrate(param_range, method, Q, k, b0_method: BaseflowInitialMethod = "Q0"):
+    """
+    Calibrate the parameter for baseflow separation using the specified method.
+
+    1. Identify recession periods using 'recession_period(Q)'.
+
+        'recession_period(Q)' finds stretches where the 3-day average flow keeps
+        falling for at least 10 days, and keeps the last 40% of each stretch.
+        Those are the days where flow is almost entirely groundwater.
+        Everything else (idx_other) is storm-influenced.
+
+    2. Score each candidate parameter p. For each p, it runs the filter and compares baseflow b with total flow Q on a log scale. Log scale weights low flows, which is where baseflow lives.
+
+        NSE_rec: how well b matches Q on recession days. Baseflow should equal
+        flow there, so higher is better.
+
+        NSE_oth: how well b matches Q on other days. Baseflow should be well
+        below flow there, so a good filter gets a low NSE.
+
+        f_exd: the fraction of days where the filter produced b > Q and had to
+        be capped. This is physically impossible, so the fraction should be
+        small.
+
+    3. Combine the three scores into one loss:
+
+        loss = 1 - (1 - (1-NSE_rec)/(1-NSE_oth)) * (1 - f_exd)
+
+        The loss is small when NSE_rec is high, NSE_oth is low, and few days
+        exceed flow. It then returns the p with the lowest loss.
+
+    Parameters
+    ----------
+    param_range : ndarray
+        Array of parameter values to test.
+    method : callable
+        Function to calculate baseflow and the number of exceedances.
+    Q : ndarray
+        Streamflow time series.
+    k : float
+        Additional parameter for the method.
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow method or value. "zi" is calculated for each
+        candidate's filter coefficients. Numeric strings are also accepted.
+
+    Returns
+    -------
+    float
+        Candidate parameter value minimizing the loss function.
+    """
+    idx_recession = recession_period(Q)
+    idx_other = np.full(Q.shape[0], True)
+    idx_other[idx_recession] = False
+    logQ = np.log1p(Q)
+    logQ_idx_recession = logQ[idx_recession]
+    logQ_idx_other = logQ[idx_other]
     loss = np.zeros(param_range.shape)
+    if b0_method != "zi":
+        b0_method = _init_baseflow(Q, b0_method, k=k)
     for i in range(param_range.shape[0]):
         p = param_range[i]
-        b_exceed, num_exceed = method(Q, b_LH, p)
+        b_exceed, num_exceed = method(Q, k, p, b0_method=b0_method)
         f_exd = num_exceed / Q.shape[0]
-        logb = np.log(b_exceed + 1)
-        NSE_rec = NSE(log_q[idx_rec], logb[idx_rec])
-        NSE_oth = NSE(log_q[idx_oth], logb[idx_oth])
+        logb = np.log1p(b_exceed)
+        NSE_rec = NSE(logQ_idx_recession, logb[idx_recession])
+        NSE_oth = NSE(logQ_idx_other, logb[idx_other])
         loss[i] = 1 - (1 - (1 - NSE_rec) / (1 - NSE_oth)) * (1 - f_exd)
     return param_range[np.argmin(loss)]
 
@@ -79,7 +119,7 @@ def maximum_BFI(Q, b_LH, a, date=None):
         annual_b = np.mean(b[:idx_end].reshape(-1, 365), axis=1)
         annual_q = np.mean(Q[:idx_end].reshape(-1, 365), axis=1)
     else:
-        idx_year = date.Y - date.Y.min()
+        idx_year = date.year - date.year.min()
         counts = np.bincount(idx_year)
         idx_valid = counts > 0
         annual_b = np.bincount(idx_year, weights=b)[idx_valid] / counts[idx_valid]

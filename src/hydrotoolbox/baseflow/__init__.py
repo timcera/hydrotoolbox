@@ -1,30 +1,31 @@
+# Standard library imports
 import os
 
 __all__ = [
+    "KGE",
     "boughton",
     "chapman",
     "chapman_maxwell",
     "eckhardt",
     "ewma",
     "five_day",
-    "fixed",
     "furey",
     "ihacres",
     "lyne_hollick",
-    "local",
-    "slide",
-    "strict",
-    "ukih",
-    "willems",
-    "recession_coefficient",
-    "param_calibrate",
-    "recession_period",
     "maximum_BFI",
+    "param_calibrate",
+    "recession_coefficient",
+    "recession_period",
     "separation",
     "strict_baseflow",
-    "KGE",
+    "ukih",
+    "usgs_hysep_fixed",
+    "usgs_hysep_local",
+    "usgs_hysep_slide",
+    "willems",
 ]
 
+# Local folder imports
 from .comparison import KGE, strict_baseflow
 from .methods import (
     boughton,
@@ -33,14 +34,13 @@ from .methods import (
     eckhardt,
     ewma,
     five_day,
-    fixed,
     furey,
     ihacres,
-    local,
     lyne_hollick,
-    slide,
-    strict,
     ukih,
+    usgs_hysep_fixed,
+    usgs_hysep_local,
+    usgs_hysep_slide,
     willems,
 )
 from .param_estimate import (

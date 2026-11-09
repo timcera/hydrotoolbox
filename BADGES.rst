@@ -1,8 +1,3 @@
-.. image:: https://github.com/timcera/hydrotoolbox/actions/workflows/pypi-package.yml/badge.svg
-    :alt: Tests
-    :target: https://github.com/timcera/hydrotoolbox/actions/workflows/pypi-package.yml
-    :height: 20
-
 .. image:: https://img.shields.io/coveralls/github/timcera/hydrotoolbox
     :alt: Test Coverage
     :target: https://coveralls.io/r/timcera/hydrotoolbox?branch=master

@@ -1,6 +1,8 @@
+# Third party imports
 import pandas as pd
 import pytest
 
+# First party imports
 from hydrotoolbox import hydrotoolbox
 
 

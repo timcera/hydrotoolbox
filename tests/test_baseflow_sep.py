@@ -1,9 +1,13 @@
+# Standard library imports
 import subprocess
+import typing
 from io import StringIO
 
+# Third party imports
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
+# First party imports
 from hydrotoolbox import hydrotoolbox
 
 # This stupid thing is needed so that linters don't remove the hydrotoolbox
@@ -29,6 +33,8 @@ BFLIST = [
     {"expected": "ewma"},
     {"expected": "five_day"},
     {"expected": "furey"},
+    {"expected": "furey_auto_c3c1"},
+    {"expected": "furey_auto_all"},
     {"expected": "ihacres"},
     {"expected": "lyne_hollick"},
     {"expected": "ukih"},
@@ -40,31 +46,41 @@ BFLIST = [
 
 
 class TestBaseflowSep:
-    params = {"test_baseflow_sep": BFLIST, "test_baseflow_sep_cli_mean": BFLIST}
+    params: typing.ClassVar = {
+        "test_baseflow_sep": BFLIST,
+        "test_baseflow_sep_cli_mean": BFLIST,
+    }
 
     def test_baseflow_sep(self, expected):
         input_fname = "tests/data_short.csv"
         extra_args = ""
         if expected == "ihacres":
-            extra_args = "0.1 0.5 0.5"
+            extra_args = "-k=0.1 -C=0.5 -a=0.5"
         elif expected == "chapman":
             extra_args = "-k=0.5"
         elif expected == "chapman_maxwell":
             extra_args = "-k=0.1"
         elif expected == "lyne_hollick":
-            extra_args = "--alpha=0.750"
+            extra_args = "--alpha=0.750 --passes=1"
         elif expected in ["usgs_hysep_fixed", "usgs_hysep_local", "usgs_hysep_slide"]:
             extra_args = "--num_days=1"
         elif expected == "eckhardt":
             extra_args = "-k=0.83 --bfi_max=0.75"
         elif expected == "furey":
-            extra_args = "-k=0.95 --c3c1=3.5"
+            extra_args = "-k=0.9658722625903429 --c3c1=1.43"
+        elif expected == "furey_auto_c3c1":
+            extra_args = "-k=0.9658722625903429"
+            expected = "furey"
+        elif expected == "furey_auto_all":
+            extra_args = ""
+            expected = "furey"
         args = f"hydrotoolbox baseflow_sep {expected} --input_ts={input_fname} {extra_args}"
         complete = subprocess.run(
             args, capture_output=True, text=True, check=True, shell=True
         )
         testf = pd.read_csv(StringIO(complete.stdout), parse_dates=True, index_col=0)
         testf.columns = [f"Q::{expected}"]
+
         base = pd.read_csv(
             f"tests/data_baseflow_{expected}.csv",
             parse_dates=True,
@@ -85,13 +101,19 @@ class TestBaseflowSep:
         elif expected == "chapman_maxwell":
             extra_args = "k=0.1,"
         elif expected == "lyne_hollick":
-            extra_args = "alpha=0.750,"
+            extra_args = "alpha=0.750, passes=1,"
         elif expected in ["usgs_hysep_fixed", "usgs_hysep_local", "usgs_hysep_slide"]:
             extra_args = "num_days=1,"
         elif expected == "eckhardt":
             extra_args = "k=0.83, bfi_max=0.75,"
         elif expected == "furey":
-            extra_args = "k=0.95, c3c1=3.5,"
+            extra_args = "k=0.9658722625903429, c3c1=1.43,"
+        elif expected == "furey_auto_c3c1":
+            extra_args = "k=0.9658722625903429,"
+            expected = "furey"
+        elif expected == "furey_auto_all":
+            extra_args = ""
+            expected = "furey"
         testf = eval(
             f"hydrotoolbox.baseflow_sep.{expected}({extra_args} input_ts='{input_fname}').astype('float64')"
         )

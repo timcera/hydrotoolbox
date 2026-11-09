@@ -2,15 +2,35 @@ __all__ = [
     "ukih",
 ]
 
+# Third party imports
 import numpy as np
 
+# First party imports
+from hydrotoolbox.baseflow.methods.lyne_hollick import lyne_hollick
+from hydrotoolbox.baseflow.param_estimate import resolve_k
+from hydrotoolbox.baseflow.utils import BaseflowInitialMethod
 
-def ukih(Q, b_LH):
-    """graphical method developed by UK Institute of Hydrology (UKIH, 1980)
 
-    Args:
-        Q (np.array): streamflow
+def ukih(Q, k=None, b0_method: BaseflowInitialMethod = "zi"):
+    """Graphical method developed by the UK Institute of Hydrology (UKIH, 1980).
+
+    Parameters
+    ----------
+    Q : ndarray
+        Streamflow.
+    k : float, optional
+        Recession coefficient used for the Lyne-Hollick end values.
+        Estimated from the streamflow if None.
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow for the Lyne-Hollick series used at the edges.
+        "zi" uses SciPy filter initialization. Numeric strings are accepted.
+
+    Returns
+    -------
+    ndarray
+        Separated baseflow.
     """
+    b_LH = lyne_hollick(Q, resolve_k(Q, k), b0_method=b0_method)
     N = 5
     block_end = Q.shape[0] // N * N
     idx_min = np.argmin(Q[:block_end].reshape(-1, N), axis=1)

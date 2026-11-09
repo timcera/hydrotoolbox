@@ -1,9 +1,12 @@
+# Standard library imports
 import re
 import unittest
 
+# Third party imports
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
+# First party imports
 from hydrotoolbox import indices
 
 all = [

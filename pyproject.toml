@@ -35,7 +35,7 @@ dependencies = [
     "pandas[excel]",
     "pint!=0.21.*",
     "pint-pandas",
-    "pydantic",
+    "pydantic >= 2.0",
     "scipy",
     "tabulate"
 ]
@@ -62,12 +62,12 @@ documentation = "https://timcera.bitbucket.io/hydrotoolbox/docs/index.html#hydro
 github = "https://github.com/timcera/hydrotoolbox"
 
 [tool.commitizen]
+multiline = true
 name = "cz_conventional_commits"
 tag_format = "v$version"
 update_changelog_on_bump = true
 version = "2.3.2"
 version_files = ["VERSION"]
-multiline = true
 
 [tool.isort]
 profile = "black"
@@ -79,20 +79,20 @@ formats = "auto:percent"
 testpaths = ["tests"]
 
 [tool.ruff]
-fix = true
 exclude = [
-    "src/*/toolbox_utils/**/*.py"
+    "src/hydrotoolbox/toolbox_utils"
 ]
+fix = true
 
 [tool.ruff.lint]
 extend-select = ["I"]
 
 [tool.ruff.lint.isort.import-heading]
+first-party = "First party imports"
 future = "Future imports"
+local-folder = "Local folder imports"
 standard-library = "Standard library imports"
 third-party = "Third party imports"
-first-party = "First party imports"
-local-folder = "Local folder imports"
 
 [tool.setuptools]
 include-package-data = true

@@ -1,9 +1,11 @@
-from typing import Optional
+# Standard library imports
 
+# Third party imports
 import numpy as np
 import pandas as pd
 from scipy.signal import find_peaks
 
+# First party imports
 from hydrotoolbox.toolbox_utils.src.toolbox_utils import tsutils
 
 
@@ -43,18 +45,21 @@ class Indices:
 
     def MA1(self):
         """MA1
+
         Mean of the daily mean flow values for the entire flow record.
         cubic feet per second—temporal"""
         return self.data.mean()
 
     def MA2(self):
         """MA2
+
         Median of the daily mean flow values for the entire flow record.
         cubic feet per second—temporal"""
         return self.data.median()
 
     def MA3(self):
         """MA3
+
         Mean (or median) of the coefficients of variation (standard
         deviation/mean) for each year.  Compute the coefficient of variation
         for each year of daily flows. Compute the mean of the annual
@@ -68,6 +73,7 @@ class Indices:
 
     def MA4(self):
         """MA4
+
         Standard deviation of the percentiles of the logs of the entire flow
         record divided by the mean of percentiles of the logs.   Compute the
         log10 of the daily flows for the entire record.  Compute the 5th, 10th,
@@ -106,6 +112,7 @@ class Indices:
 
     def MA5(self):
         """MA5
+
         The skewness of the entire flow record is computed as the mean for the
         entire flow record (MA1) divided by the median (MA2) for the entire
         flow record.
@@ -120,6 +127,7 @@ class Indices:
 
     MA6 = _make_MA_6_8(0.9, 0.1)
     MA6.__doc__ = """MA6
+
 Range in daily flows is the ratio of the 10-percent to 90-percent  exceedance
 values for the entire flow record. Compute the 5-percent to 95-percent
 exceedance values for the entire flow record. Exceedance is computed by
@@ -128,12 +136,14 @@ interpolating between the   ordered (descending) flow values.  Divide the
 dimensionless—spatial"""
     MA7 = _make_MA_6_8(0.8, 0.2)
     MA7.__doc__ = """MA7
+
 Range in daily flows is computed like MA6, except using the 20 percent and 80
 percent exceedance values. Divide the 20 percent exceedance value by the 80
 percent value.
 dimensionless—spatial"""
     MA8 = _make_MA_6_8(0.75, 0.25)
     MA8.__doc__ = """MA8
+
 Range in daily flows is computed like MA6, except using the 25-percent and
 75-percent exceedance values. Divide the 25-percent exceedance value by the
 75-percent value.
@@ -147,6 +157,7 @@ dimensionless—spatial"""
 
     MA9 = _make_MA_9_11(0.9, 0.1)
     MA9.__doc__ = """MA9
+
 Spread in daily flows is the ratio of the difference between the 90th and 10th
 percentile of the logs of the flow data to the log of the median of the entire
 flow record. Compute the log10 of the daily flows for the entire record.
@@ -158,11 +169,13 @@ ordered (ascending) logs of the flow values.  Compute MA9 as (90th –10th)
 dimensionless—spatial"""
     MA10 = _make_MA_9_11(0.8, 0.2)
     MA10.__doc__ = """MA10
+
 Spread in daily flows is computed like MA9, except using the 20th and 80th
 percentiles.
 dimensionless—spatial"""
     MA11 = _make_MA_9_11(0.75, 0.25)
     MA11.__doc__ = """MA11
+
 Spread in daily flows is computed like MA9, except using the 25th and 75th
 percentiles.
 dimensionless—spatial"""
@@ -177,6 +190,7 @@ dimensionless—spatial"""
 
     MA12 = _make_MA_12_23(1)
     MA12.__doc__ = """MA12
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -185,6 +199,7 @@ MA12 is the mean of all January flow values over the entire record
 (cubic feet per second— temporal)."""
     MA13 = _make_MA_12_23(2)
     MA13.__doc__ = """MA13
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -194,6 +209,7 @@ MA12 is the mean of all January flow values over the entire record
 (cubic feet per second— temporal)."""
     MA14 = _make_MA_12_23(3)
     MA14.__doc__ = """MA14
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -203,6 +219,7 @@ MA12 is the mean of all January flow values over the entire record
 (cubic feet per second— temporal)."""
     MA15 = _make_MA_12_23(4)
     MA15.__doc__ = """MA15
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -212,6 +229,7 @@ MA12 is the mean of all January flow values over the entire record
 (cubic feet per second— temporal)."""
     MA16 = _make_MA_12_23(5)
     MA16.__doc__ = """MA16
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -221,6 +239,7 @@ MA12 is the mean of all January flow values over the entire record
 (cubic feet per second— temporal)."""
     MA17 = _make_MA_12_23(6)
     MA17.__doc__ = """MA17
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -229,6 +248,7 @@ MA17 is the mean of all June flow values over the entire record
 (cubic feet per second— temporal)."""
     MA18 = _make_MA_12_23(7)
     MA18.__doc__ = """MA18
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -237,6 +257,7 @@ MA18 is the mean of all July flow values over the entire record
 (cubic feet per second— temporal)."""
     MA19 = _make_MA_12_23(8)
     MA19.__doc__ = """MA19
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -245,6 +266,7 @@ MA19 is the mean of all August flow values over the entire record
 (cubic feet per second— temporal)."""
     MA20 = _make_MA_12_23(9)
     MA20.__doc__ = """MA20
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -253,6 +275,7 @@ MA20 is the mean of all September flow values over the entire record
 (cubic feet per second— temporal)."""
     MA21 = _make_MA_12_23(10)
     MA21.__doc__ = """MA21
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -261,6 +284,7 @@ MA21 is the mean of all October flow values over the entire record
 (cubic feet per second— temporal)."""
     MA22 = _make_MA_12_23(11)
     MA22.__doc__ = """MA22
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -269,6 +293,7 @@ MA22 is the mean of all November flow values over the entire record
 (cubic feet per second— temporal)."""
     MA23 = _make_MA_12_23(12)
     MA23.__doc__ = """MA23
+
 Means (or medians) of monthly flow values. Compute the means for each.  Means
 (or medians) of monthly flow values. Compute the means for each month over the
 entire flow record.
@@ -290,6 +315,7 @@ MA23 is the mean of all December flow values over the entire record
 
     MA24 = _make_MA_24_35(1)
     MA24.__doc__ = """MA24
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -300,6 +326,7 @@ MA24 is the variability of all January flow values over the entire record.
 percent—temporal"""
     MA25 = _make_MA_24_35(2)
     MA25.__doc__ = """MA25
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -310,6 +337,7 @@ MA25 is the variability of all February flow values over the entire record.
 percent—temporal"""
     MA26 = _make_MA_24_35(3)
     MA26.__doc__ = """MA26
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -320,6 +348,7 @@ MA26 is the variability of all March flow values over the entire record.
 percent—temporal"""
     MA27 = _make_MA_24_35(4)
     MA27.__doc__ = """MA27
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -330,6 +359,7 @@ MA27 is the variability of all April flow values over the entire record.
 percent—temporal"""
     MA28 = _make_MA_24_35(5)
     MA28.__doc__ = """MA28
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -340,6 +370,7 @@ MA28 is the variability of all May flow values over the entire record.
 percent—temporal"""
     MA29 = _make_MA_24_35(6)
     MA29.__doc__ = """MA29
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -350,6 +381,7 @@ MA29 is the variability of all June flow values over the entire record.
 percent—temporal"""
     MA30 = _make_MA_24_35(7)
     MA30.__doc__ = """MA30
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -360,6 +392,7 @@ MA30 is the variability of all July flow values over the entire record.
 percent—temporal"""
     MA31 = _make_MA_24_35(8)
     MA31.__doc__ = """MA31
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -370,6 +403,7 @@ MA31 is the variability of all August flow values over the entire record.
 percent—temporal"""
     MA32 = _make_MA_24_35(9)
     MA32.__doc__ = """MA32
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -379,7 +413,8 @@ years.
 MA32 is the variability of all September flow values over the entire record.
 percent—temporal"""
     MA33 = _make_MA_24_35(10)
-    MA33.__doc__ = """
+    MA33.__doc__ = """MA33
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -390,6 +425,7 @@ MA33 is the variability of all October flow values over the entire record.
 percent—temporal"""
     MA34 = _make_MA_24_35(11)
     MA34.__doc__ = """MA34
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -400,6 +436,7 @@ MA34 is the variability of all November flow values over the entire record.
 percent—temporal"""
     MA35 = _make_MA_24_35(12)
     MA35.__doc__ = """MA35
+
 Variability (coefficient of variation) of monthly flow values. Compute the
 standard deviation for each.  Variability (coefficient of month in each year
 over the entire flow record. Divide the standard deviation by the mean for each
@@ -411,6 +448,7 @@ percent—temporal"""
 
     def MA36(self):
         """MA36
+
         Variability across monthly flows. Compute the minimum, maximum, and
         mean flows for each month in the entire flow record.  MA36 is the
         maximum monthly flow minus the minimum monthly flow divided by the
@@ -431,6 +469,7 @@ percent—temporal"""
 
     MA37 = _make_MA_37_38(0.75, 0.25)
     MA37.__doc__ = """MA37
+
 Variability across monthly flows. Compute the first (25th percentile) and the
 third (75th percentile) quartiles (every month in dimensionless— the flow
 record). MA37 is the third quartile minus the first quartile divided by the
@@ -438,6 +477,7 @@ median of the monthly means.
 dimensionless-spatial"""
     MA38 = _make_MA_37_38(0.9, 0.1)
     MA38.__doc__ = """MA38
+
 Variability across monthly flows. Compute the 10th and 90th percentiles for the
 monthly means (every month in the flow record). MA38 is the 90th percentile
 minus the 10th percentile divided by the median of the monthly means.
@@ -445,6 +485,7 @@ dimensionless—spatial"""
 
     def MA39(self):
         """MA39
+
         Variability across monthly flows. Compute the standard deviation for
         the monthly means. MA39 is the standard deviation times 100 divided by
         the mean of the monthly means.
@@ -453,6 +494,7 @@ dimensionless—spatial"""
 
     def MA40(self):
         """MA40
+
         Skewness in the monthly flows. MA40 is the mean of the monthly flow
         means minus the median of the monthly means divided by the median of
         the monthly means.
@@ -463,6 +505,7 @@ dimensionless—spatial"""
 
     def MA41(self):
         """MA41
+
         Annual runoff. Compute the annual mean daily flows. MA41 is the mean of
         the annual means divided by the drainage area.
         cubic feet per second/ square mile—temporal"""
@@ -470,6 +513,7 @@ dimensionless—spatial"""
 
     def MA42(self):
         """MA42
+
         Variability across annual flows. MA42 is the maximum annual flow minus
         the minimum annual flow divided by the median annual flow.
         dimensionless-spatial"""
@@ -488,6 +532,7 @@ dimensionless—spatial"""
 
     MA43 = _make_MA_43_44(0.75, 0.25)
     MA43.__doc__ = """MA43
+
 Variability across annual flows. Compute the first (25th percentile) and third
 (75th percentile) quartiles for the annual means (every year in the flow
 record).
@@ -497,6 +542,7 @@ the annual means.
 dimensionless-spatial"""
     MA44 = _make_MA_43_44(0.9, 0.1)
     MA44.__doc__ = """MA44
+
 Variability across annual flows. Compute the 10th and 90th percentiles for the
 annual means (every year in the flow record).
 
@@ -506,6 +552,7 @@ dimensionless-spatial"""
 
     def MA45(self):
         """MA45
+
         Skewness in the annual flows. MA45 is the mean of the annual flow means
         minus the median of the annual means divided by the median of the
         annual means.
@@ -528,6 +575,7 @@ dimensionless-spatial"""
 
     ML1 = _make_ML_1_12(1)
     ML1.__doc__ = """ML1
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -536,6 +584,7 @@ record.
 cubic feet per second—temporal"""
     ML2 = _make_ML_1_12(2)
     ML2.__doc__ = """ML2
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -544,6 +593,7 @@ record.
 cubic feet per second—temporal"""
     ML3 = _make_ML_1_12(3)
     ML3.__doc__ = """ML3
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -552,6 +602,7 @@ record.
 cubic feet per second—temporal"""
     ML4 = _make_ML_1_12(4)
     ML4.__doc__ = """ML4
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -560,6 +611,7 @@ record.
 cubic feet per second—temporal"""
     ML5 = _make_ML_1_12(5)
     ML5.__doc__ = """ML5
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -568,6 +620,7 @@ record.
 cubic feet per second—temporal"""
     ML6 = _make_ML_1_12(6)
     ML6.__doc__ = """ML6
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -576,6 +629,7 @@ record.
 cubic feet per second—temporal"""
     ML7 = _make_ML_1_12(7)
     ML7.__doc__ = """ML7
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -584,6 +638,7 @@ record.
 cubic feet per second—temporal"""
     ML8 = _make_ML_1_12(8)
     ML8.__doc__ = """ML8
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -592,6 +647,7 @@ record.
 cubic feet per second—temporal"""
     ML9 = _make_ML_1_12(9)
     ML9.__doc__ = """ML9
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -600,6 +656,7 @@ record.
 cubic feet per second—temporal"""
     ML10 = _make_ML_1_12(10)
     ML10.__doc__ = """ML10
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -608,6 +665,7 @@ record.
 cubic feet per second—temporal"""
     ML11 = _make_ML_1_12(11)
     ML11.__doc__ = """ML11
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -616,6 +674,7 @@ record.
 cubic feet per second—temporal"""
     ML12 = _make_ML_1_12(12)
     ML12.__doc__ = """ML12
+
 Mean (or median) of minimum flows for each month across all years. Compute the
 minimums for each month over the entire flow record.
 
@@ -625,6 +684,7 @@ cubic feet per second—temporal"""
 
     def ML13(self):
         """ML13
+
         Variability (coefficient of variation) across minimum monthly flow
         values. Compute the mean and standard deviation for the minimum monthly
         flows over the entire flow record. ML13 is the standard deviation times
@@ -634,6 +694,7 @@ cubic feet per second—temporal"""
 
     def ML14(self):
         """ML14
+
         Compute the minimum annual flow for each year. ML14 is the mean of the
         ratios of minimum annual flows to the median flow for each year.
         dimensionless—temporal"""
@@ -644,6 +705,7 @@ cubic feet per second—temporal"""
 
     def ML15(self):
         """ML15
+
         Low-flow index. ML15 is the mean of the ratios of minimum annual flows
         to the mean flow for each year.
         dimensionless—temporal"""
@@ -651,6 +713,7 @@ cubic feet per second—temporal"""
 
     def ML16(self):
         """ML16
+
         Median of annual minimum flows. ML16 is the median of the ratios of
         minimum annual flows to the median flow for each year.
         dimensionless— temporal"""
@@ -658,6 +721,7 @@ cubic feet per second—temporal"""
 
     def ML17(self):
         """ML17
+
         Base flow. Compute the mean annual flows. Compute the minimum of
         a 7-day moving average flows for each year and divide them by the mean
         annual flow for that year. ML17 is the mean (or median if use_median is
@@ -671,6 +735,7 @@ cubic feet per second—temporal"""
 
     def ML18(self):
         """ML18
+
         Variability in base flow. Compute the standard deviation for the ratios
         of 7-day moving average flows to mean annual flows for each year. ML18
         is the standard deviation times 100 divided by the mean of the ratios.
@@ -682,6 +747,7 @@ cubic feet per second—temporal"""
 
     def ML19(self):
         """ML19
+
         Base flow. Compute the ratios of the minimum annual flow to mean annual
         flow for each year. ML19 is the mean (or median) of these ratios times
         100.
@@ -692,6 +758,7 @@ cubic feet per second—temporal"""
 
     def ML20(self):
         """ML20
+
         Base flow. Divide the daily flow record into 5-day blocks. Find the
         minimum flow for each block. Assign the minimum flow as a base flow for
         that block if 90 percent of that minimum flow is less than the minimum
@@ -700,6 +767,7 @@ cubic feet per second—temporal"""
         the entire record and the total base flow for the entire record. ML20
         is the ratio of total flow to total base flow.
         dimensionless—spatial"""
+        # Local folder imports
         from ..baseflow_sep import five_day
 
         newq = five_day(self.data)
@@ -707,6 +775,7 @@ cubic feet per second—temporal"""
 
     def ML21(self):
         """ML21
+
         Variability across annual minimum flows. Compute the mean and standard
         deviation for the annual minimum flows. ML21 is the standard deviation
         times 100 divided by the mean.
@@ -715,6 +784,7 @@ cubic feet per second—temporal"""
 
     def ML22(self):
         """ML22
+
         Specific mean annual minimum flow. ML22 is the mean (or median) of the
         annual minimum flows divided by the drainage area.
         cubic feet per second/square mile—temporal"""
@@ -729,6 +799,7 @@ cubic feet per second—temporal"""
 
     MH1 = _make_MH_1_12(1)
     MH1.__doc__ = """MH1
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -737,6 +808,7 @@ record.
 second—temporal"""
     MH2 = _make_MH_1_12(2)
     MH2.__doc__ = """MH2
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -745,6 +817,7 @@ record.
 second—temporal"""
     MH3 = _make_MH_1_12(3)
     MH3.__doc__ = """MH3
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -753,6 +826,7 @@ record.
 second—temporal"""
     MH4 = _make_MH_1_12(4)
     MH4.__doc__ = """MH4
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -761,6 +835,7 @@ record.
 second—temporal"""
     MH5 = _make_MH_1_12(5)
     MH5.__doc__ = """MH5
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -769,6 +844,7 @@ record.
 second—temporal"""
     MH6 = _make_MH_1_12(6)
     MH6.__doc__ = """MH6
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -777,6 +853,7 @@ record.
 second—temporal"""
     MH7 = _make_MH_1_12(7)
     MH7.__doc__ = """MH7
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -785,6 +862,7 @@ record.
 second—temporal"""
     MH8 = _make_MH_1_12(8)
     MH8.__doc__ = """MH8
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -793,6 +871,7 @@ record.
 second—temporal"""
     MH9 = _make_MH_1_12(9)
     MH9.__doc__ = """MH9
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -801,6 +880,7 @@ record.
 second—temporal"""
     MH10 = _make_MH_1_12(10)
     MH10.__doc__ = """MH10
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -809,6 +889,7 @@ record.
 second—temporal"""
     MH11 = _make_MH_1_12(11)
     MH11.__doc__ = """MH11
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -817,6 +898,7 @@ record.
 second—temporal"""
     MH12 = _make_MH_1_12(12)
     MH12.__doc__ = """MH12
+
 Mean (or median) maximum flows for each month across all years. Compute the
 maximums for each month over the entire cubic feet per flow record.
 
@@ -826,6 +908,7 @@ second—temporal"""
 
     def MH13(self):
         """MH13
+
         Variability (coefficient of variation) across maximum monthly flow
         values. Compute the mean and standard deviation for the maximum monthly
         flows over the entire flow record. MH13 is the standard deviation times
@@ -835,6 +918,7 @@ second—temporal"""
 
     def MH14(self):
         """MH14
+
         Median of annual maximum flows. Compute the annual maximum flows from
         monthly maximum flows. Compute the ratio of annual maximum flow to
         median annual flow for each year. MH14 is the median of these ratios.
@@ -849,6 +933,7 @@ second—temporal"""
 
     MH15 = _MH_15_17(0.99)
     MH15.__doc__ = """MH15
+
 High flow discharge index. Compute the 1-percent exceedance value for the
 entire data record.
 
@@ -857,6 +942,7 @@ entire record.
 dimensionless—spatial"""
     MH16 = _MH_15_17(0.90)
     MH16.__doc__ = """MH16
+
 High flow discharge index. Compute the 1-percent exceedance value for the
 entire data record.
 
@@ -865,6 +951,7 @@ entire record.
 dimensionless—spatial"""
     MH17 = _MH_15_17(0.75)
     MH17.__doc__ = """MH17
+
 High flow discharge index. Compute the 1-percent exceedance value for the
 entire data record.
 
@@ -874,6 +961,7 @@ dimensionless—spatial"""
 
     def MH18(self):
         """MH18
+
         Variability across annual maximum flows. Compute the logs (log10) of
         the maximum annual flows. Find the standard percent—spatial deviation
         and mean for these values. MH18 is the standard deviation times 100
@@ -920,7 +1008,7 @@ dimensionless—spatial"""
     MH22 = _make_MH_21_23(3)
     MH23 = _make_MH_21_23(7)
 
-    def _make_MH_24_26(med_mult: int = 1, quantile: Optional[float] = None):
+    def _make_MH_24_26(med_mult: int = 1, quantile: float | None = None):
         def template(self):
             if quantile is not None:
                 medm = self.data.quantile(quantile)
@@ -949,9 +1037,12 @@ dimensionless—spatial"""
 
         Returns
         -------
-        Given threshold and comparison, returns number of matching events per
-        year, average duration of events, count of all matching days for each
-        year.
+        event_counts : pandas.Series
+            Number of matching events per year.
+        average_durations : pandas.Series
+            Average event duration for years with matching events.
+        matching_days : pandas.Series
+            Count of matching days per year.
         """
         nnp = {}
         lfdur = {}
@@ -1286,6 +1377,7 @@ dimensionless—spatial"""
 
     def TL1(self):
         """TL1
+
         Julian date of annual minimum. Determine the Julian date of the minimum
         flow for each water year. Transform the dates to relative values on
         a circular scale (radians or degrees). Compute the x and y components
@@ -1302,6 +1394,7 @@ dimensionless—spatial"""
 
     def TL2(self):
         """TL2
+
         Variability in Julian date of annual minima. Compute the coefficient of
         variation for the mean x and y components, and convert to a date.
         Julian day—spatial"""
@@ -1318,6 +1411,7 @@ dimensionless—spatial"""
 
     def TH1(self):
         """TH1
+
         Julian date of annual maximum. Determine the Julian date of the maximum
         flow for each year. Transform the dates to relative values on a circular
         scale (radians or degrees). Compute the x and y components for each
@@ -1333,6 +1427,7 @@ dimensionless—spatial"""
 
     def TH2(self):
         """TH2
+
         Variability in Julian date of annual maxima. Compute the coefficient of
         variation for the mean x and y components and convert to a date.
         Julian days—spatial"""

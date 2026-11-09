@@ -1,6 +1,7 @@
 """Define hydrotoolbox package."""
 
 # Import main functions from hydrotoolbox module
+# First party imports
 from hydrotoolbox.hydrotoolbox import (
     about,
     exceedance_time,

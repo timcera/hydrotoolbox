@@ -24,35 +24,20 @@ __all__ = [
     "willems",
 ]
 
+# Standard library imports
 import logging
 import warnings
 
+# Third party imports
 import numpy as np
 import pandas as pd
+from pydantic import validate_call
 
-__all__ = [
-    "boughton",
-    "chapman",
-    "chapman_maxwell",
-    "eckhardt",
-    "ewma",
-    "usgs_hysep_fixed",
-    "furey",
-    "lyne_hollick",
-    "usgs_hysep_local",
-    "ihacres",
-    "usgs_hysep_slide",
-    "ukih",
-    "willems",
-    "five_day",
-]
+logger = logging.getLogger(__name__)
 
-try:
-    from pydantic import validate_call
-except ImportError:
-    from pydantic import validate_arguments as validate_call
-
-from .baseflow.separation import separation
+# Local folder imports
+from .baseflow import methods
+from .baseflow.utils import BaseflowInitialMethod
 from .toolbox_utils.src.toolbox_utils import tsutils
 
 warnings.filterwarnings("ignore")
@@ -90,22 +75,7 @@ tsutils.docstrings["bfi_max"] = """bfi_max
 """
 
 
-def bfsep(
-    flow,
-    method,
-    print_input,
-    bfi=False,
-    date=None,
-    num_days=None,
-    area=None,
-    ice_period=None,
-    k=None,
-    c3c1=None,
-    C=None,
-    a=None,
-    bfi_max=None,
-    passes=1,
-):
+def _apply(flow, func, print_input, suffix, **params):
     complete_index = pd.date_range(start=flow.index[0], end=flow.index[-1], freq="D")
     flow = flow.reindex(complete_index, fill_value=np.nan)
     ntsd = pd.DataFrame()
@@ -116,7 +86,7 @@ def bfsep(
         ncol = flow[col].astype("float64")
         negmask = ncol <= 0
         if negmask.any():
-            logging.warning(
+            logger.warning(
                 tsutils.error_wrapper(
                     f"""{negmask.sum()} negative or 0 values in input data.  No
                     baseflow separation technique works with negative values.
@@ -129,7 +99,7 @@ def bfsep(
             )
         missingmask = ncol.isnull()
         if missingmask.any():
-            logging.warning(
+            logger.warning(
                 tsutils.error_wrapper(
                     f"""{missingmask.sum()} missing values in input data.  No
                     baseflow separation technique works with missing values.
@@ -143,27 +113,14 @@ def bfsep(
         ncol[negmask] = pd.NA
         ncol = ncol.dropna()
         ndf = pd.DataFrame(
-            separation(
-                ncol.values,
-                date=date,
-                num_days=num_days,
-                area=area,
-                ice_period=ice_period,
-                method=method,
-                k=k,
-                c3c1=c3c1,
-                C=C,
-                a=a,
-                bfi_max=bfi_max,
-                passes=passes,
-            )[bfi],
+            func(ncol.values, **params),
             index=ncol.index,
         )
         ndf.columns = [col]
         q_base = q_base.join(ndf, how="outer")
     q_base = q_base.reindex(flow.index)
     q_base.index.name = "Datetime"
-    return tsutils.return_input(print_input, ntsd, q_base, suffix=method.lower())
+    return tsutils.return_input(print_input, ntsd, q_base, suffix=suffix)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -183,6 +140,7 @@ def boughton(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """
     Boughton double-parameter filter [1]_
@@ -218,7 +176,18 @@ def boughton(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
 
     References
     ----------
@@ -242,7 +211,9 @@ def boughton(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "boughton", print_input, k=k, C=C)
+    return _apply(
+        flow, methods.boughton, print_input, "boughton", k=k, C=C, b0_method=b0_method
+    )
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -261,9 +232,11 @@ def chapman(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """
     Chapman filter [1]_
+
     ::
 
         bₜ = (3k-1)⁄(3-k) bₜ₋₁ + (1-k)⁄(3-k) (Qₜ + Qₜ₋₁)
@@ -291,7 +264,18 @@ def chapman(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
 
     References
     ----------
@@ -315,7 +299,9 @@ def chapman(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "chapman", print_input, k=k)
+    return _apply(
+        flow, methods.chapman, print_input, "chapman", k=k, b0_method=b0_method
+    )
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -334,8 +320,10 @@ def chapman_maxwell(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """Digital filter (Chapman and Maxwell, 1996)
+
     ::
 
         bₜ = k⁄(2-k) bₜ₋₁ + (1-k)⁄(2-k) Qₜ
@@ -363,7 +351,18 @@ def chapman_maxwell(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -381,7 +380,14 @@ def chapman_maxwell(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "chapman_maxwell", print_input, k=k)
+    return _apply(
+        flow,
+        methods.chapman_maxwell,
+        print_input,
+        "chapman_maxwell",
+        k=k,
+        b0_method=b0_method,
+    )
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -401,8 +407,10 @@ def eckhardt(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """Eckhardt filter (Eckhardt, 2005)
+
     ::
 
         bₜ = [(1 - BFIₘₐₓ) k bₜ₋₁ + (1 - k) BFIₘₐₓ Qₜ]⁄[1 - (k BFIₘₐₓ)]
@@ -432,7 +440,18 @@ def eckhardt(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -450,7 +469,15 @@ def eckhardt(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "eckhardt", print_input, k=k, bfi_max=bfi_max)
+    return _apply(
+        flow,
+        methods.eckhardt,
+        print_input,
+        "eckhardt",
+        k=k,
+        bfi_max=bfi_max,
+        b0_method=b0_method,
+    )
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -468,6 +495,7 @@ def ewma(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "LH",
 ):
     """Exponential Weighted Moving Average (EWMA) filter (Tularam and Ilahee, 2008)
 
@@ -487,7 +515,18 @@ def ewma(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "LH".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -505,7 +544,7 @@ def ewma(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "ewma", print_input)
+    return _apply(flow, methods.ewma, print_input, "ewma", b0_method=b0_method)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -552,6 +591,12 @@ def usgs_hysep_fixed(
     ${target_units}
     ${print_input}
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -569,7 +614,75 @@ def usgs_hysep_fixed(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "fixed", print_input, area=area, num_days=num_days)
+    return _apply(
+        flow,
+        methods.usgs_hysep_fixed,
+        print_input,
+        "fixed",
+        area=area,
+        num_days=num_days,
+    )
+
+
+@tsutils.doc(tsutils.docstrings)
+def five_day(
+    input_ts="-",
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    print_input=False,
+):
+    """Value kept if less than 90 percent of adjacent 5-day blocks.
+
+    Parameters
+    ----------
+    input_ts
+        Streamflow
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
+    """
+    flow = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    return _apply(flow, methods.five_day, print_input, "five_day")
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -589,6 +702,7 @@ def furey(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "Q0",
 ):
     """
     Furey digital filter [Furey and Gupta, 2001]
@@ -600,12 +714,12 @@ def furey(
 
     ::
 
-        bₜ = k bₜ₋₁ + (1-k) c3c1 (Qₜ₋₁ - bₜ₋₁)
+        bₜ = k bₜ₋₁ + (1 - k) c3c1 (Qₜ₋₁ - bₜ₋₁)
 
         bₜ = baseflow for the current day
         bₜ₋₁ = baseflow for the previous day
         Qₜ₋₁ = total stream flow for the previous day
-        k = recession constant [values between 0 and 1]
+        k = recession constant [values between 0 and 1], k = 1 - ɣ
         c3c1 = ratio of overland flow to groundwater flow, sometimes expressed
                as c3/c1 where c3 is the ratio of groundwater recharge to
                precipitation and c1 is the ratio of overland flow to
@@ -635,7 +749,18 @@ def furey(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "Q0".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
 
     References
     ----------
@@ -659,152 +784,23 @@ def furey(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "furey", print_input, k=k, c3c1=c3c1)
-
-
-@tsutils.doc(tsutils.docstrings)
-def lyne_hollick(
-    input_ts="-",
-    alpha=0.925,
-    passes=1,
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-):
-    """
-    Digital filter [1]_
-    ::
-
-        bₜ = α bₜ₋₁ + (1-α)⁄2 (Qₜ + Qₜ₋₁)
-
-        bₜ = baseflow for the current day
-        bₜ₋₁ = baseflow for the previous day
-        Qₜ = total stream flow for the current day
-        Qₜ₋₁ = total stream flow for the previous day
-        α = recession constant [values between 0 and 1]
-
-    Parameters
-    ----------
-    input_ts
-        Streamflow
-    ${columns}
-    alpha
-        Catchment constant (value between 0 and 1).  Default is 0.925.
-    passes : int
-        The number of passes to use for the filter.
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-
-    References
-    ----------
-    .. [1] Lyne V., Hollick M. (1979) - Stochastic time-variable
-       rainfall-runoff modelling. Institute of Engineers Australia National
-       Conference. Publ. 79/10, pp. 89-93.
-    """
-    flow = tsutils.common_kwds(
-        tsutils.read_iso_ts(
-            input_ts,
-            skiprows=skiprows,
-            names=names,
-            index_type=index_type,
-        ),
-        start_date=start_date,
-        end_date=end_date,
-        pick=columns,
-        round_index=round_index,
-        dropna=dropna,
-        clean=clean,
-        source_units=source_units,
-        target_units=target_units,
+    return _apply(
+        flow,
+        methods.furey,
+        print_input,
+        "furey",
+        k=k,
+        c3c1=c3c1,
+        b0_method=b0_method,
     )
-    return bfsep(flow, "lyne_hollick", print_input, k=alpha, passes=passes)
-
-
-@tsutils.doc(tsutils.docstrings)
-def usgs_hysep_local(
-    num_days=None,
-    area=None,
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-):
-    """
-    USGS HYSEP Local minimum graphical method (Sloto and Crouse, 1996)
-
-    Parameters
-    ----------
-    ${num_days}
-    ${area}
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    flow = tsutils.common_kwds(
-        tsutils.read_iso_ts(
-            input_ts,
-            skiprows=skiprows,
-            names=names,
-            index_type=index_type,
-        ),
-        start_date=start_date,
-        end_date=end_date,
-        pick=columns,
-        round_index=round_index,
-        dropna=dropna,
-        clean=clean,
-        source_units=source_units,
-        target_units=target_units,
-    )
-    return bfsep(flow, "local", print_input, area=area, num_days=num_days)
 
 
 @validate_call
 @tsutils.doc(tsutils.docstrings)
 def ihacres(
-    k: float,
-    C: float,
-    a: float,
+    k: float | None = None,
+    C: float | None = None,
+    a: float | None = None,
     input_ts="-",
     columns=None,
     source_units=None,
@@ -818,6 +814,7 @@ def ihacres(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """IHACRES
 
@@ -835,14 +832,19 @@ def ihacres(
     Parameters
     ----------
     k : float
-        k
-        coefficient
+        [optional, default is None, where k will be calculated from the input
+        data]
+
+        Groundwater recession constant.
     C : float
-        C
-        coefficient
+        [optional, default is None, where C will be calibrated from the input
+        data]
+
+        C coefficient
     a : float
-        a
-        coefficient
+        [optional, default is None, which uses 0]
+
+        a coefficient
     input_ts
         Streamflow
     ${columns}
@@ -857,7 +859,18 @@ def ihacres(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
 
     References
     ----------
@@ -881,7 +894,269 @@ def ihacres(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "ihacres", print_input, k=k, C=C, a=a)
+    return _apply(
+        flow,
+        methods.ihacres,
+        print_input,
+        "ihacres",
+        k=k,
+        C=C,
+        a=a,
+        b0_method=b0_method,
+    )
+
+
+@tsutils.doc(tsutils.docstrings)
+def lyne_hollick(
+    input_ts="-",
+    alpha=0.925,
+    passes=1,
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
+):
+    """
+    Digital filter [1]_
+
+    ::
+
+        bₜ = α bₜ₋₁ + (1-α)⁄2 (Qₜ + Qₜ₋₁)
+
+        bₜ = baseflow for the current day
+        bₜ₋₁ = baseflow for the previous day
+        Qₜ = total stream flow for the current day
+        Qₜ₋₁ = total stream flow for the previous day
+        α = recession constant [values between 0 and 1]
+
+    Each calculated baseflow is clipped to the range from zero to the current
+    pass's flow before it is used in the next calculation.
+
+    Parameters
+    ----------
+    input_ts
+        Streamflow
+    ${columns}
+    alpha
+        Catchment constant (value between 0 and 1).  Default is 0.925.
+    passes : int
+        The number of passes to use for the filter.
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
+        Initialization is applied only to the first pass; later passes start
+        at the previous pass's final value. Use "Q0" to start at the first
+        flow value.
+    ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
+
+    References
+    ----------
+    .. [1] Lyne V., Hollick M. (1979) - Stochastic time-variable
+       rainfall-runoff modelling. Institute of Engineers Australia National
+       Conference. Publ. 79/10, pp. 89-93.
+    """
+    flow = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    return _apply(
+        flow,
+        methods.lyne_hollick,
+        print_input,
+        "lyne_hollick",
+        k=alpha,
+        passes=passes,
+        b0_method=b0_method,
+    )
+
+
+@tsutils.doc(tsutils.docstrings)
+def usgs_hysep_local(
+    num_days=None,
+    area=None,
+    input_ts="-",
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
+):
+    """
+    USGS HYSEP Local minimum graphical method (Sloto and Crouse, 1996)
+
+    Parameters
+    ----------
+    ${num_days}
+    ${area}
+    input_ts
+        Streamflow
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
+        This initializes the Lyne-Hollick series used at the edges.
+    ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
+    """
+    flow = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    return _apply(
+        flow,
+        methods.usgs_hysep_local,
+        print_input,
+        "local",
+        area=area,
+        num_days=num_days,
+        b0_method=b0_method,
+    )
+
+
+@tsutils.doc(tsutils.docstrings)
+def ukih(
+    input_ts="-",
+    columns=None,
+    source_units=None,
+    start_date=None,
+    end_date=None,
+    dropna="no",
+    clean=False,
+    round_index=None,
+    skiprows=None,
+    index_type="datetime",
+    names=None,
+    target_units=None,
+    print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
+):
+    """Graphical method developed by UK Institute of Hydrology (UKIH, 1980)
+
+    Parameters
+    ----------
+    input_ts
+        Streamflow
+    ${columns}
+    ${source_units}
+    ${start_date}
+    ${end_date}
+    ${dropna}
+    ${clean}
+    ${round_index}
+    ${skiprows}
+    ${index_type}
+    ${names}
+    ${target_units}
+    ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
+        This initializes the Lyne-Hollick series used at the edges.
+    ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
+    """
+    flow = tsutils.common_kwds(
+        tsutils.read_iso_ts(
+            input_ts,
+            skiprows=skiprows,
+            names=names,
+            index_type=index_type,
+        ),
+        start_date=start_date,
+        end_date=end_date,
+        pick=columns,
+        round_index=round_index,
+        dropna=dropna,
+        clean=clean,
+        source_units=source_units,
+        target_units=target_units,
+    )
+    return _apply(flow, methods.ukih, print_input, "ukih", b0_method=b0_method)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -934,6 +1209,12 @@ def usgs_hysep_slide(
     ${target_units}
     ${print_input}
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -951,62 +1232,14 @@ def usgs_hysep_slide(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "slide", print_input, area=area, num_days=num_days)
-
-
-@tsutils.doc(tsutils.docstrings)
-def ukih(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-):
-    """Graphical method developed by UK Institute of Hydrology (UKIH, 1980)
-
-    Parameters
-    ----------
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    flow = tsutils.common_kwds(
-        tsutils.read_iso_ts(
-            input_ts,
-            skiprows=skiprows,
-            names=names,
-            index_type=index_type,
-        ),
-        start_date=start_date,
-        end_date=end_date,
-        pick=columns,
-        round_index=round_index,
-        dropna=dropna,
-        clean=clean,
-        source_units=source_units,
-        target_units=target_units,
+    return _apply(
+        flow,
+        methods.usgs_hysep_slide,
+        print_input,
+        "slide",
+        area=area,
+        num_days=num_days,
     )
-    return bfsep(flow, "ukih", print_input)
 
 
 @tsutils.doc(tsutils.docstrings)
@@ -1024,8 +1257,10 @@ def willems(
     names=None,
     target_units=None,
     print_input=False,
+    b0_method: BaseflowInitialMethod = "zi",
 ):
     """Digital filter (Willems, 2009)
+
     ::
 
         v = (1 - w) * (1 - k) / (2 * w)
@@ -1052,7 +1287,18 @@ def willems(
     ${names}
     ${target_units}
     ${print_input}
+    b0_method : {"Q0", "min", "LH", "zi"} or float, optional
+        Initial baseflow: first flow, minimum flow, first Lyne-Hollick
+        baseflow, SciPy filter initialization, or an explicit value. Numeric
+        strings are accepted.
+        The default is "zi".
     ${tablefmt}
+
+    Returns
+    -------
+    pandas.DataFrame
+        Separated baseflow for each input column, optionally joined with the
+        input.
     """
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -1070,113 +1316,4 @@ def willems(
         source_units=source_units,
         target_units=target_units,
     )
-    return bfsep(flow, "willems", print_input)
-
-
-@tsutils.doc(tsutils.docstrings)
-def five_day(
-    input_ts="-",
-    columns=None,
-    source_units=None,
-    start_date=None,
-    end_date=None,
-    dropna="no",
-    clean=False,
-    round_index=None,
-    skiprows=None,
-    index_type="datetime",
-    names=None,
-    target_units=None,
-    print_input=False,
-):
-    """Value kept if less than 90 percent of adjacent 5-day blocks.
-
-    Parameters
-    ----------
-    input_ts
-        Streamflow
-    ${columns}
-    ${source_units}
-    ${start_date}
-    ${end_date}
-    ${dropna}
-    ${clean}
-    ${round_index}
-    ${skiprows}
-    ${index_type}
-    ${names}
-    ${target_units}
-    ${print_input}
-    ${tablefmt}
-    """
-    flow = tsutils.common_kwds(
-        tsutils.read_iso_ts(
-            input_ts,
-            skiprows=skiprows,
-            names=names,
-            index_type=index_type,
-        ),
-        start_date=start_date,
-        end_date=end_date,
-        pick=columns,
-        round_index=round_index,
-        dropna=dropna,
-        clean=clean,
-        source_units=source_units,
-        target_units=target_units,
-    )
-    return bfsep(flow, "five_day", print_input)
-
-
-# @tsutils.doc(tsutils.docstrings)
-# def strict(
-#     input_ts="-",
-#     columns=None,
-#     source_units=None,
-#     start_date=None,
-#     end_date=None,
-#     dropna="no",
-#     clean=False,
-#     round_index=None,
-#     skiprows=None,
-#     index_type="datetime",
-#     names=None,
-#     target_units=None,
-#     print_input=False,
-# ):
-#     """Return "strict" baseflow.
-#
-#     Parameters
-#     ----------
-#     input_ts
-#         Streamflow
-#     ${columns}
-#     ${source_units}
-#     ${start_date}
-#     ${end_date}
-#     ${dropna}
-#     ${clean}
-#     ${round_index}
-#     ${skiprows}
-#     ${index_type}
-#     ${names}
-#     ${target_units}
-#     ${tablefmt}
-#     """
-#     flow = tsutils.common_kwds(
-#         tsutils.read_iso_ts(
-#             input_ts,
-#             skiprows=skiprows,
-#             names=names,
-#             index_type=index_type,
-#         ),
-#         start_date=start_date,
-#         end_date=end_date,
-#         pick=columns,
-#         round_index=round_index,
-#         dropna=dropna,
-#         clean=clean,
-#         source_units=source_units,
-#         target_units=target_units,
-#     )
-#     return bfsep(flow, "strict", print_input)
+    return _apply(flow, methods.willems, print_input, "willems", b0_method=b0_method)
