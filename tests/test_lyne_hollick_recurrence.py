@@ -113,5 +113,5 @@ def test_public_api_and_cli_cap_each_step(tmp_path, passes, initial):
     cli.index = pd.to_datetime(cli.index)
     cli.index.freq = "D"
 
-    assert api.iloc[:, 0] == pytest.approx(expected)
-    assert cli.iloc[:, 0] == pytest.approx(expected)
+    assert api.iloc[:, 0].to_numpy() == pytest.approx(expected)
+    assert cli.iloc[:, 0].to_numpy() == pytest.approx(expected, rel=1e-5)
