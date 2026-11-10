@@ -1,3 +1,9 @@
+## v2.4.0 (2026-11-09)
+
+### Feat
+
+- **baseflow_sep**: reworked all aspect of the baseflow_sep functionality
+
 ## v2.3.2 (2026-06-11)
 
 ### Fix
