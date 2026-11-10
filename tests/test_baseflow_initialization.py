@@ -9,6 +9,7 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 from scipy.signal import lfilter, lfilter_zi
 
 # First party imports
@@ -97,7 +98,7 @@ def test_general_filter_initial_condition_and_legacy_default():
         0
     ]
     result, count = general_form_digital_filter(FLOW, alpha, beta, gamma)
-    np.testing.assert_allclose(result, np.clip(old, 0, FLOW))
+    assert result == pytest.approx(np.clip(old, 0, FLOW))
     assert count == np.count_nonzero(old > FLOW)
 
     raw = np.empty_like(FLOW)
@@ -105,7 +106,7 @@ def test_general_filter_initial_condition_and_legacy_default():
     for i in range(1, len(FLOW)):
         raw[i] = alpha * raw[i - 1] + beta * (FLOW[i] + gamma * FLOW[i - 1])
     result, count = general_form_digital_filter(FLOW, alpha, beta, gamma, b0_method=1.5)
-    np.testing.assert_allclose(result, np.clip(raw, 0, FLOW))
+    assert result == pytest.approx(np.clip(raw, 0, FLOW))
     assert count == np.count_nonzero(raw > FLOW)
 
 
@@ -120,7 +121,7 @@ def test_zi_initialization_uses_filter_coefficients(alpha, beta, gamma, delta):
     actual, count = general_form_digital_filter(
         FLOW, alpha, beta, gamma, delta=delta, b0_method="zi"
     )
-    np.testing.assert_allclose(actual, np.clip(expected, 0, FLOW))
+    assert actual == pytest.approx(np.clip(expected, 0, FLOW))
     assert count == np.count_nonzero(expected > FLOW)
 
 
@@ -143,9 +144,8 @@ def test_method_rejects_none_initialization(method, kwargs):
     [(method, kwargs) for method, kwargs in METHODS if method not in (furey, ewma)],
 )
 def test_zi_is_the_explicit_default(method, kwargs):
-    np.testing.assert_allclose(
-        method(FLOW, k=K, **kwargs),
-        method(FLOW, k=K, b0_method="zi", **kwargs),
+    assert method(FLOW, k=K, **kwargs) == pytest.approx(
+        method(FLOW, k=K, b0_method="zi", **kwargs)
     )
 
 
@@ -221,16 +221,14 @@ def test_zi_calibration_uses_each_candidates_coefficients(
 
 
 def test_ewma_legacy_initialization_1():
-    np.testing.assert_allclose(
-        ewma(FLOW, k=K, e=0.2),
-        ewma(FLOW, k=K, e=0.2, b0_method=lyne_hollick(FLOW, K)[0]),
+    assert ewma(FLOW, k=K, e=0.2) == pytest.approx(
+        ewma(FLOW, k=K, e=0.2, b0_method=lyne_hollick(FLOW, K)[0])
     )
 
 
 def test_ewma_legacy_initialization_2():
-    np.testing.assert_allclose(
-        ewma(FLOW, k=K, e=0.2),
-        ewma(FLOW, k=K, e=0.2, b0_method="LH"),
+    assert ewma(FLOW, k=K, e=0.2) == pytest.approx(
+        ewma(FLOW, k=K, e=0.2, b0_method="LH")
     )
 
 
@@ -244,7 +242,7 @@ def test_lyne_hollick_initializes_only_first_pass(initial, passes):
     if passes % 2 == 0:
         expected = expected[::-1]
     actual = lyne_hollick(FLOW, K, passes=passes, b0_method=initial)
-    np.testing.assert_allclose(actual, expected)
+    assert actual == pytest.approx(expected)
 
 
 @pytest.mark.parametrize("name", ["ukih", "usgs_hysep_local"])
@@ -261,10 +259,10 @@ def test_graphical_initialization_changes_only_lyne_hollick_edges(name):
     original = func(q, k=K)
     actual = func(q, k=K, b0_method="min")
     edge = lh_filter(q, K, b0_method="min")
-    np.testing.assert_allclose(actual[: turns[0]], edge[: turns[0]])
-    np.testing.assert_allclose(actual[turns[-1] + 1 :], edge[turns[-1] + 1 :])
-    np.testing.assert_allclose(
-        actual[turns[0] : turns[-1] + 1], original[turns[0] : turns[-1] + 1]
+    assert actual[: turns[0]] == pytest.approx(edge[: turns[0]])
+    assert actual[turns[-1] + 1 :] == pytest.approx(edge[turns[-1] + 1 :])
+    assert actual[turns[0] : turns[-1] + 1] == pytest.approx(
+        original[turns[0] : turns[-1] + 1]
     )
     assert actual[0] != pytest.approx(original[0])
 
@@ -274,10 +272,8 @@ def test_separation_passes_initialization_to_methods():
     values, scores = separation(
         q, method=["chapman", "furey"], k=K, c3c1=0.4, b0_method="min"
     )
-    np.testing.assert_allclose(values["chapman"], chapman(q, k=K, b0_method="min"))
-    np.testing.assert_allclose(
-        values["furey"], furey(q, k=K, c3c1=0.4, b0_method="min")
-    )
+    assert values["chapman"] == pytest.approx(chapman(q, k=K, b0_method="min"))
+    assert values["furey"] == pytest.approx(furey(q, k=K, c3c1=0.4, b0_method="min"))
     assert scores.shape == (2,)
 
 
@@ -313,7 +309,9 @@ def test_graphical_api_and_cli_initialization(tmp_path, name, extra_args):
         check=True,
     )
     actual = pd.read_csv(StringIO(result.stdout), index_col=0)
-    np.testing.assert_allclose(actual.iloc[:, 0], expected.iloc[:, 0], rtol=1e-5)
+    actual.index = pd.to_datetime(actual.index)
+    actual.index.freq = "D"
+    assert_series_equal(actual.iloc[:, 0], expected.iloc[:, 0], check_dtype=False)
 
 
 @pytest.mark.parametrize(
@@ -350,7 +348,9 @@ def test_zi_public_api_and_cli(tmp_path, name):
         check=True,
     )
     actual = pd.read_csv(StringIO(result.stdout), index_col=0)
-    np.testing.assert_allclose(actual.iloc[:, 0], expected.iloc[:, 0], rtol=1e-5)
+    actual.index = pd.to_datetime(actual.index)
+    actual.index.freq = "D"
+    assert_series_equal(actual.iloc[:, 0], expected.iloc[:, 0], check_dtype=False)
 
 
 @pytest.mark.parametrize(
@@ -377,7 +377,7 @@ def test_calibration_propagates_initialization(
         expected = getattr(module, name)(
             flow, k=k, b0_method=initial, **extra, **{parameter: selected}
         )
-        np.testing.assert_allclose(calculated, expected)
+        assert calculated == pytest.approx(expected)
         return selected
 
     monkeypatch.setattr(module, "param_calibrate", calibrate)
@@ -385,7 +385,7 @@ def test_calibration_propagates_initialization(
     expected = getattr(module, name)(
         FLOW, k=K, b0_method=initial, **extra, **{parameter: selected}
     )
-    np.testing.assert_allclose(actual, expected)
+    assert actual == pytest.approx(expected)
 
 
 def test_param_calibrate_initializes_once(monkeypatch):
@@ -445,4 +445,6 @@ def test_api_and_cli_initialization(tmp_path, name, kwargs, args, initial):
     ]
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     actual = pd.read_csv(StringIO(result.stdout), index_col=0)
-    np.testing.assert_allclose(actual.iloc[:, 0], expected.iloc[:, 0], rtol=1e-5)
+    actual.index = pd.to_datetime(actual.index)
+    actual.index.freq = "D"
+    assert_series_equal(actual.iloc[:, 0], expected.iloc[:, 0], check_dtype=False)
