@@ -608,7 +608,7 @@ def indices(
     +------+------------------------------------------------------------------+
     | FH7  | Flood frequency. Compute the average number of flow events with  |
     |      | flows above a threshold equal to seven times the median flow     |
-    |      | value for the entire flow record. FH6 is the average (or median) |
+    |      | value for the entire flow record. FH7 is the average (or median) |
     |      | number of events. number of events/year—temporal                 |
     +------+------------------------------------------------------------------+
     | FH8  | Flood frequency. Compute the average number of flow events with  |
@@ -643,6 +643,104 @@ def indices(
     |      | minimum of a 30-day moving average flow for each year. cubic     |
     |      | feet per DL4 is the mean (or median) of these values.            |
     |      | second—temporal                                                  |
+    +------+------------------------------------------------------------------+
+    | DL5  | Annual minimum of 90-day mean of flow                            |
+    +------+------------------------------------------------------------------+
+    | DL6  | CV: annual minimum of 1-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DL7  | CV: annual minimum of 3-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DL8  | CV: annual minimum of 7-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DL9  | CV: annual minimum of 30-day mean of flow                        |
+    +------+------------------------------------------------------------------+
+    | DL10 | CV: annual minimum of 90-day mean of flow                        |
+    +------+------------------------------------------------------------------+
+    | DL11 | Mean of 1-day minimum of flow                                    |
+    +------+------------------------------------------------------------------+
+    | DL12 | Mean of 7-day minimum of flow                                    |
+    +------+------------------------------------------------------------------+
+    | DL13 | Mean of 30-day minimum of flow                                   |
+    +------+------------------------------------------------------------------+
+    | DL14 | Mean of Q75 values/median daily flow across all years            |
+    +------+------------------------------------------------------------------+
+    | DL15 | Mean of Q90 values/median daily flow across all years            |
+    +------+------------------------------------------------------------------+
+    | DL16 | Low flow pulse duration (Mean duration of FL1)                   |
+    +------+------------------------------------------------------------------+
+    | DL17 | CV: low flow pulse duration (DL16)                               |
+    +------+------------------------------------------------------------------+
+    | DL18 | Mean annual number of zero-flow days                             |
+    +------+------------------------------------------------------------------+
+    | DL19 | CV: mean annual number of zero-flow days                         |
+    +------+------------------------------------------------------------------+
+    | DL20 | Percentage of all months with zero flow                          |
+    +------+------------------------------------------------------------------+
+    | DH1  | Annual maximum of 1-day mean of flow                             |
+    +------+------------------------------------------------------------------+
+    | DH2  | Annual maximum of 3-day mean of flow                             |
+    +------+------------------------------------------------------------------+
+    | DH3  | Annual maximum of 7-day mean of flow                             |
+    +------+------------------------------------------------------------------+
+    | DH4  | Annual maximum of 30-day mean of flow                            |
+    +------+------------------------------------------------------------------+
+    | DH5  | Annual maximum of 90-day mean of flow                            |
+    +------+------------------------------------------------------------------+
+    | DH6  | CV: annual maximum of 1-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DH7  | CV: annual maximum of 3-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DH8  | CV: annual maximum of 7-day mean of flow                         |
+    +------+------------------------------------------------------------------+
+    | DH9  | CV: annual maximum of 30-day mean of flow                        |
+    +------+------------------------------------------------------------------+
+    | DH10 | CV: annual maximum of 90-day mean of flow                        |
+    +------+------------------------------------------------------------------+
+    | DH11 | Mean of 1-day maximum of flow                                    |
+    +------+------------------------------------------------------------------+
+    | DH12 | Mean of 7-day maximum of flow                                    |
+    +------+------------------------------------------------------------------+
+    | DH13 | Mean of 30-day maximum of flow                                   |
+    +------+------------------------------------------------------------------+
+    | DH14 | Q95 value/mean monthly flow across all years                     |
+    +------+------------------------------------------------------------------+
+    | DH15 | Mean duration of flood pulses>75th percentile flow               |
+    +------+------------------------------------------------------------------+
+    | DH16 | CV: mean duration of high flow pulse (FH1)                       |
+    +------+------------------------------------------------------------------+
+    | DH17 | Mean duration of flood pulses>1*median flow                      |
+    +------+------------------------------------------------------------------+
+    | DH18 | Mean duration of flood pulses>3*median flow                      |
+    +------+------------------------------------------------------------------+
+    | DH19 | Mean duration of flood pulses>7*median flow                      |
+    +------+------------------------------------------------------------------+
+    | DH20 | Mean duration of flood pulses>75th percentile of median flow     |
+    +------+------------------------------------------------------------------+
+    | DH21 | Mean duration of flood pulses>25th percentile of median flow     |
+    +------+------------------------------------------------------------------+
+    | TA1  | Constancy (see Colwell: 1974)                                    |
+    +------+------------------------------------------------------------------+
+    | TA2  | Predictability of flow                                           |
+    +------+------------------------------------------------------------------+
+    | RA1  | Mean of positive changes from one day to next (rise rate)        |
+    +------+------------------------------------------------------------------+
+    | RA2  | CV: mean of positive changes from one day to next (rise rate)    |
+    +------+------------------------------------------------------------------+
+    | RA3  | Mean of negative changes from one day to next (fall rate)        |
+    +------+------------------------------------------------------------------+
+    | RA4  | CV: mean of negative changes from one day to next (fall rate)    |
+    +------+------------------------------------------------------------------+
+    | RA5  | Ratio of days that are higher than previous day                  |
+    +------+------------------------------------------------------------------+
+    | RA6  | Median of difference in log of flows over two consecutive days   |
+    |      | of rising flow                                                   |
+    +------+------------------------------------------------------------------+
+    | RA7  | Median of difference in log of flows over two consecutive days   |
+    |      | of falling flow                                                  |
+    +------+------------------------------------------------------------------+
+    | RA8  | Number of flow reversals from one day to the next                |
+    +------+------------------------------------------------------------------+
+    | RA9  | CV: number of flow reversals from one day to the next            |
     +------+------------------------------------------------------------------+
 
     Parameters
@@ -687,7 +785,6 @@ def indices(
     dict
         Hydrologic index codes and descriptions mapped to calculated values.
     """
-
     indice_codes = list(indice_codes)
     flow = tsutils.common_kwds(
         tsutils.read_iso_ts(
@@ -749,9 +846,9 @@ def indices(
             ("HARSH_INTERMITTENT", "HIGH_FLOW_MAGNITUDE"): {"MH23", "MH14", "MH9"},
             ("HARSH_INTERMITTENT", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
             ("HARSH_INTERMITTENT", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH5", "FH7"},
-            ("HARSH_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL2", "DL3"},
-            ("HARSH_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH5", "DH10"},
-            ("HARSH_INTERMITTENT", "TIMING"): {"TH1", "TL2"},
+            ("HARSH_INTERMITTENT", "LOW_FLOW_DURATION"): {"DL1", "DL2", "DL13"},
+            ("HARSH_INTERMITTENT", "HIGH_FLOW_DURATION"): {"DH5", "DH10", "DH22"},
+            ("HARSH_INTERMITTENT", "TIMING"): {"TH1", "TL2", "TH2"},
             ("HARSH_INTERMITTENT", "RATE_OF_CHANGE"): {"RA4", "RA1", "RA5"},
             ("FLASHY_INTERMITTENT", "AVERAGE_MAGNITUDE"): {
                 "MA37",
@@ -788,17 +885,18 @@ def indices(
                 "DH12",
                 "DH13",
                 "DH15",
+                "DH23",
             },
-            ("FLASHY_INTERMITTENT", "TIMING"): {"TA1", "TA2", "TL1"},
+            ("FLASHY_INTERMITTENT", "TIMING"): {"TA1", "TA2", "TL1", "TH3"},
             ("FLASHY_INTERMITTENT", "RATE_OF_CHANGE"): {"RA9", "RA6", "RA5", "RA7"},
             ("SNOWMELT_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA29", "MA40"},
             ("SNOWMELT_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML22"},
             ("SNOWMELT_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH1", "MH20"},
             ("SNOWMELT_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
-            ("SNOWMELT_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH8"},
+            ("SNOWMELT_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH8", "FH11"},
             ("SNOWMELT_PERENNIAL", "LOW_FLOW_DURATION"): {"DL5", "DL16"},
             ("SNOWMELT_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH16", "DH19"},
-            ("SNOWMELT_PERENNIAL", "TIMING"): {"TA1"},
+            ("SNOWMELT_PERENNIAL", "TIMING"): {"TA1", "TA3"},
             ("SNOWMELT_PERENNIAL", "RATE_OF_CHANGE"): {"RA1", "RA8"},
             ("SNOW_RAIN_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA44"},
             ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML13", "ML14"},
@@ -806,14 +904,14 @@ def indices(
             ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
             ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH5"},
             ("SNOW_RAIN_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL13"},
-            ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH12"},
+            ("SNOW_RAIN_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH12", "DH24"},
             ("SNOW_RAIN_PERENNIAL", "TIMING"): {"TA1", "TL1"},
             ("SNOW_RAIN_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA8"},
             ("GROUNDWATER_PERENNIAL", "AVERAGE_MAGNITUDE"): {"MA3", "MA41", "MA8"},
             ("GROUNDWATER_PERENNIAL", "LOW_FLOW_MAGNITUDE"): {"ML18", "ML14", "ML16"},
             ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_MAGNITUDE"): {"MH17", "MH19", "MH10"},
             ("GROUNDWATER_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3", "FL1"},
-            ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH6"},
+            ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH3", "FH6", "FH11"},
             ("GROUNDWATER_PERENNIAL", "LOW_FLOW_DURATION"): {"DL9", "DL11", "DL16"},
             ("GROUNDWATER_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH11", "DH15", "DH20"},
             ("GROUNDWATER_PERENNIAL", "TIMING"): {"TA1", "TH1", "TL2"},
@@ -824,8 +922,8 @@ def indices(
             ("FLASHY_PERENNIAL", "LOW_FLOW_FREQUENCY"): {"FL2", "FL3"},
             ("FLASHY_PERENNIAL", "HIGH_FLOW_FREQUENCY"): {"FH4", "FH6", "FH7"},
             ("FLASHY_PERENNIAL", "LOW_FLOW_DURATION"): {"DL6", "DL10", "DL17"},
-            ("FLASHY_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH13", "DH16"},
-            ("FLASHY_PERENNIAL", "TIMING"): {"TA1"},
+            ("FLASHY_PERENNIAL", "HIGH_FLOW_DURATION"): {"DH13", "DH16", "DH24"},
+            ("FLASHY_PERENNIAL", "TIMING"): {"TA1", "TA3", "TH3"},
             ("FLASHY_PERENNIAL", "RATE_OF_CHANGE"): {"RA9", "RA7", "RA6"},
             ("ALL_STREAMS", "AVERAGE_MAGNITUDE"): {"MA5", "MA41", "MA3", "MA11"},
             ("ALL_STREAMS", "LOW_FLOW_MAGNITUDE"): {"ML17", "ML4", "ML21", "ML18"},
@@ -834,7 +932,7 @@ def indices(
             ("ALL_STREAMS", "HIGH_FLOW_FREQUENCY"): {"FH2", "FH3", "FH6", "FH7"},
             ("ALL_STREAMS", "LOW_FLOW_DURATION"): {"DL13", "DL16", "DL17", "DL18"},
             ("ALL_STREAMS", "HIGH_FLOW_DURATION"): {"DH13", "DH15", "DH16", "DH20"},
-            ("ALL_STREAMS", "TIMING"): {"TA1", "TL2"},
+            ("ALL_STREAMS", "TIMING"): {"TA1", "TH3", "TL2"},
             ("ALL_STREAMS", "RATE_OF_CHANGE"): {"RA9", "RA8", "RA6", "RA5"},
         }
 
@@ -1014,8 +1112,8 @@ def indices(
         "DH17": "Mean duration of flood pulses>1*median flow",
         "DH18": "Mean duration of flood pulses>3*median flow",
         "DH19": "Mean duration of flood pulses>7*median flow",
-        "DH20": "Mean duration of flood pulses>25th percentile of median flow",
-        "DH21": "Mean duration of flood pulses>75th percentile of median flow",
+        "DH20": "Mean duration of flood pulses>75th percentile of median flow",
+        "DH21": "Mean duration of flood pulses>25th percentile of median flow",
         "DH22": "Mean annual median interval in days between floods over all years",
         "DH23": "Mean annual number of days that flows>threshold over all years",
         "DH24": "Mean annual maximum number of 365-day periods in which no floods occur",
