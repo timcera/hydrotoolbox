@@ -1470,6 +1470,7 @@ class Indices:
     @staticmethod
     def _run_lengths(cond):
         """Lengths of consecutive True runs in a boolean Series."""
+        cond = cond.astype(bool)
         rid = (cond != cond.shift()).cumsum()
         return cond[cond].groupby(rid[cond]).size()
 

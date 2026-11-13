@@ -560,7 +560,8 @@ class TestIndices(unittest.TestCase):
         ref = pd.Series(_all_large_reference)
         ref = ref.reset_index()
         ref = ref[mask]
-
+        res.to_csv("res.csv")
+        ref.to_csv("ref.csv")
         # Assert
         assert_frame_equal(res, ref, rtol=0.01)
 

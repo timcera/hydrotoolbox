@@ -86,8 +86,6 @@ def test_public_api_and_cli_cap_each_step(tmp_path, passes, initial):
         {"flow": flow}, index=pd.date_range("2020-01-01", periods=len(flow))
     ).to_csv(path, index_label="Datetime")
 
-    expected = lyne_hollick(np.array(flow), 0.925, passes, b0_method=initial)
-
     api = baseflow_sep.lyne_hollick(
         input_ts=str(path), alpha=0.925, passes=passes, b0_method=initial
     )
@@ -113,5 +111,7 @@ def test_public_api_and_cli_cap_each_step(tmp_path, passes, initial):
     cli.index = pd.to_datetime(cli.index)
     cli.index.freq = "D"
 
-    assert api.iloc[:, 0].to_numpy() == pytest.approx(expected)
-    assert cli.iloc[:, 0].to_numpy() == pytest.approx(expected, rel=1e-5)
+    expected = lyne_hollick(np.array(flow), 0.925, passes, b0_method=initial).tolist()
+
+    assert api.iloc[:, 0].to_list() == pytest.approx(expected)
+    assert cli.iloc[:, 0].to_list() == pytest.approx(expected, rel=1e-5)
