@@ -29,6 +29,8 @@ jobs:
                 numpy-versions: [numpy<2.0.0, numpy>=2.0.0]
 
                 exclude:
+                    - python-versions: '3.10'
+                      pandas-versions: pandas>=3.0.0
                     - python-versions: '3.12'
                       pandas-versions: pandas<2.0.0
                     - python-versions: '3.13'
