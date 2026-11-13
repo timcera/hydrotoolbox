@@ -1,3 +1,9 @@
+## v2.5.0 (2026-11-13)
+
+### Feat
+
+- added several missing hydrologic indices that TSPROC didn't have
+
 ## v2.4.0 (2026-11-09)
 
 ### Feat
